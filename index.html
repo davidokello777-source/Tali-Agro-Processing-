@@ -1,70 +1,943 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tali Agro - Farm Management System</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0; padding:0;">
-    <div id="root"></div>
+ import { useState, useEffect } from "react";
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+// ─── INITIAL SEED DATA ───────────────────────────────────────────────────────
+const SEED = {
+  crops: [
+    { id: 1, name: "Maize", field: "Block A", date: "2025-11-10", status: "Growing", notes: "Early season planting" },
+    { id: 2, name: "Soyabean", field: "Block B", date: "2025-11-20", status: "Growing", notes: "" },
+    { id: 3, name: "Groundnuts", field: "Block C", date: "2025-12-01", status: "Seedling", notes: "New variety" },
+  ],
+  livestock: [
+    { id: 1, type: "Cattle", breed: "Friesian", tag: "COW-001", health: "Healthy", vaccination: "Up to date", count: 12 },
+    { id: 2, type: "Goat", breed: "Boer", tag: "GT-007", health: "Healthy", vaccination: "Due soon", count: 24 },
+    { id: 3, type: "Poultry", breed: "Broiler", tag: "PLT-A", health: "Healthy", vaccination: "Up to date", count: 200 },
+  ],
+  workers: [
+    { id: 1, name: "James Banda", role: "Field Supervisor", phone: "+265 991 234 567", salary: 85000, status: "Active" },
+    { id: 2, name: "Grace Phiri", role: "Livestock Keeper", phone: "+265 888 345 678", salary: 70000, status: "Active" },
+    { id: 3, name: "Peter Mwale", role: "Farm Hand", phone: "+265 777 456 789", salary: 55000, status: "Active" },
+  ],
+  inventory: [
+    { id: 1, item: "Maize Seed (SC403)", qty: 50, unit: "Bags", supplier: "Seedco", date: "2025-10-15", category: "Seeds" },
+    { id: 2, item: "NPK Fertilizer", qty: 120, unit: "Bags", supplier: "Agri-Input Ltd", date: "2025-10-20", category: "Fertilizer" },
+    { id: 3, item: "Broiler Feed", qty: 40, unit: "Bags", supplier: "Livestock Feeds", date: "2025-11-01", category: "Animal Feed" },
+    { id: 4, item: "Sprayer Pump", qty: 3, unit: "Units", supplier: "Farm Tools Ltd", date: "2025-09-10", category: "Tools" },
+  ],
+  harvest: [
+    { id: 1, crop: "Maize", harvestDate: "2026-02-15", qty: 450, unit: "Bags", location: "Store A", quality: "Grade A" },
+    { id: 2, crop: "Groundnuts", harvestDate: "2026-02-20", qty: 80, unit: "Bags", location: "Store B", quality: "Grade B" },
+  ],
+  processing: [
+    { id: 1, rawMaterial: "Maize", product: "Maize Flour", date: "2026-02-20", batch: "MF-2026-01", inputQty: 100, outputQty: 85, unit: "Bags" },
+    { id: 2, rawMaterial: "Groundnuts", product: "Groundnut Paste", date: "2026-02-22", batch: "GP-2026-01", inputQty: 20, outputQty: 180, unit: "Jars" },
+  ],
+  sales: [
+    { id: 1, customer: "City Market Traders", phone: "0999 111 222", product: "Maize Flour", qty: 50, price: 12000, payment: "Paid", date: "2026-02-25" },
+    { id: 2, customer: "Green Valley Stores", phone: "0888 333 444", product: "Broiler Chicken", qty: 30, price: 8500, payment: "Pending", date: "2026-02-28" },
+    { id: 3, customer: "Tali Retail Outlet", phone: "0777 555 666", product: "Groundnut Paste", qty: 100, price: 3200, payment: "Paid", date: "2026-03-01" },
+  ],
+  expenses: [
+    { id: 1, date: "2026-01-05", type: "Seeds Purchase", amount: 125000, description: "SC403 Maize seed procurement" },
+    { id: 2, date: "2026-01-12", type: "Fertilizer", amount: 240000, description: "NPK & CAN fertilizer" },
+    { id: 3, date: "2026-02-01", type: "Salaries", amount: 320000, description: "January worker salaries" },
+    { id: 4, date: "2026-02-10", type: "Equipment Repair", amount: 45000, description: "Tractor service" },
+    { id: 5, date: "2026-03-01", type: "Animal Feed", amount: 88000, description: "Broiler feed stock" },
+  ],
+};
 
-        // --- ICONS & COMPONENTS FROM YOUR FILE ---
-        const Icon = ({ name, size = 20 }) => {
-            const icons = {
-                leaf: "M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 1-8 1 9-3.9 5 7 5 7-2.8-3-6-2-9.5-.13l4.28 4.28L17 8z",
-                dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
-                logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
-            };
-            return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-                    <path d={icons[name] || icons.leaf} />
-                </svg>
-            );
-        };
+// ─── ICONS ───────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 20 }) => {
+  const icons = {
+    dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+    crops: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z",
+    livestock: "M4.5 11h-2V9H1v6h1.5v-2.5h2V15H6V9H4.5v2zm2.5-.5h1.5V15H10V10.5h1.5V9H7v1.5zm5.5 0H14V15h1.5v-4.5H17V9h-4.5v1.5zm5.5-1.5v6H19v-2.5h1.5V15H22V9h-4z",
+    workers: "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+    inventory: "M20 6h-2.18c.07-.44.18-.88.18-1.35C18 2.54 15.96.5 13.46.5 12 .5 10.72 1.15 9.85 2.12L8 4.05 6.15 2.12C5.28 1.15 4 .5 2.54.5.04.5 2 2.54 2 4.65c0 .47.09.91.18 1.35H0v15h20V6zm-8 0H8c-.83 0-1.5-.67-1.5-1.5S7.17 3 8 3s1.5.67 1.5 1.5V5h1.5v-.5C11 3.67 11.67 3 12.5 3S14 3.67 14 4.5 13.33 6 12.5 6H12z",
+    harvest: "M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3zm0 12.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
+    processing: "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+    sales: "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
+    expenses: "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z",
+    reports: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
+    logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+    add: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
+    delete: "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z",
+    leaf: "M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 1-8 1 9-3.9 5 7 5 7-2.8-3-6-2-9.5-.13l4.28 4.28L17 8z",
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d={icons[name] || icons.leaf} />
+    </svg>
+  );
+};
 
-        // --- LOGIN PAGE ---
-        const LoginPage = ({ onLogin }) => {
-            const [u, setU] = useState("");
-            const [p, setP] = useState("");
-            const handle = () => { if (u === "admin" && p === "tali123") onLogin(); };
-            return (
-                <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0d2818", color: "white", fontFamily: "sans-serif" }}>
-                    <div style={{ background: "rgba(255,255,255,0.1)", padding: "40px", borderRadius: "20px", textAlign: "center", border: "1px solid rgba(255,255,255,0.2)" }}>
-                        <Icon name="leaf" size={50} />
-                        <h2>Tali Agro Login</h2>
-                        <input type="text" placeholder="Username" onChange={e => setU(e.target.value)} style={{ display:"block", margin:"10px auto", padding:"10px", borderRadius:"5px", border:"none" }} />
-                        <input type="password" placeholder="Password" onChange={e => setP(e.target.value)} style={{ display:"block", margin:"10px auto", padding:"10px", borderRadius:"5px", border:"none" }} />
-                        <button onClick={handle} style={{ background: "#d4a017", padding: "10px 20px", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}>Sign In</button>
-                        <p style={{fontSize: "10px", marginTop: "10px"}}>admin / tali123</p>
-                    </div>
-                </div>
-            );
-        };
+// ─── BADGE ────────────────────────────────────────────────────────────────────
+const Badge = ({ text, color = "green" }) => {
+  const colors = {
+    green: { bg: "#d4edda", text: "#155724" },
+    yellow: { bg: "#fff3cd", text: "#856404" },
+    red: { bg: "#f8d7da", text: "#721c24" },
+    blue: { bg: "#cce5ff", text: "#004085" },
+    gray: { bg: "#e2e3e5", text: "#383d41" },
+  };
+  const c = colors[color] || colors.gray;
+  return (
+    <span style={{
+      background: c.bg, color: c.text, padding: "2px 10px",
+      borderRadius: 12, fontSize: 12, fontWeight: 600, display: "inline-block"
+    }}>{text}</span>
+  );
+};
 
-        // --- MAIN APP ---
-        function App() {
-            const [loggedIn, setLoggedIn] = useState(false);
-            if (!loggedIn) return <LoginPage onLogin={() => setLoggedIn(true)} />;
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+const Modal = ({ title, onClose, children }) => (
+  <div style={{
+    position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+  }}>
+    <div style={{
+      background: "#fff", borderRadius: 16, padding: "2rem", minWidth: 420,
+      maxWidth: 600, width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <h3 style={{ margin: 0, color: "#1a3a2a", fontFamily: "'Playfair Display', serif" }}>{title}</h3>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: "#666" }}>✕</button>
+      </div>
+      {children}
+    </div>
+  </div>
+);
 
-            return (
-                <div style={{ fontFamily: 'DM Sans, sans-serif', padding: '20px' }}>
-                    <h1>Tali Agro System Active</h1>
-                    <p>Welcome, Admin. The farm management dashboard is now running via GitHub Pages.</p>
-                    <button onClick={() => setLoggedIn(false)} style={{color: "red"}}>Sign Out</button>
-                </div>
-            );
-        }
+// ─── FORM FIELD ───────────────────────────────────────────────────────────────
+const Field = ({ label, children }) => (
+  <div style={{ marginBottom: "1rem" }}>
+    <label style={{ display: "block", fontWeight: 600, color: "#2d5016", marginBottom: 4, fontSize: 13 }}>{label}</label>
+    {children}
+  </div>
+);
 
-        // 3. Render the App into the root div
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+const Input = (props) => (
+  <input {...props} style={{
+    width: "100%", padding: "9px 12px", border: "1.5px solid #c8dfc0",
+    borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box",
+    background: "#f8fdf6", transition: "border .2s",
+    ...props.style
+  }} />
+);
+
+const Select = ({ children, ...props }) => (
+  <select {...props} style={{
+    width: "100%", padding: "9px 12px", border: "1.5px solid #c8dfc0",
+    borderRadius: 8, fontSize: 14, background: "#f8fdf6", outline: "none",
+    boxSizing: "border-box"
+  }}>{children}</select>
+);
+
+// ─── PAGE HEADER ──────────────────────────────────────────────────────────────
+const PageHeader = ({ icon, title, subtitle, onAdd, addLabel = "Add New" }) => (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.8rem" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{
+        width: 50, height: 50, borderRadius: 14, background: "linear-gradient(135deg,#2e7d32,#4caf50)",
+        display: "flex", alignItems: "center", justifyContent: "center", color: "#fff"
+      }}>
+        <Icon name={icon} size={24} />
+      </div>
+      <div>
+        <h2 style={{ margin: 0, fontFamily: "'Playfair Display', serif", color: "#1a3a2a", fontSize: "1.6rem" }}>{title}</h2>
+        {subtitle && <p style={{ margin: 0, color: "#6b8f5e", fontSize: 13 }}>{subtitle}</p>}
+      </div>
+    </div>
+    {onAdd && (
+      <button onClick={onAdd} style={{
+        display: "flex", alignItems: "center", gap: 6, padding: "10px 20px",
+        background: "linear-gradient(135deg,#2e7d32,#43a047)", color: "#fff",
+        border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700,
+        fontSize: 14, boxShadow: "0 4px 12px rgba(46,125,50,.35)"
+      }}>
+        <Icon name="add" size={18} /> {addLabel}
+      </button>
+    )}
+  </div>
+);
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+const Table = ({ columns, data, renderRow }) => (
+  <div style={{ overflowX: "auto", borderRadius: 12, border: "1.5px solid #e0eed9" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+      <thead>
+        <tr style={{ background: "linear-gradient(90deg,#1a3a2a,#2e5c20)" }}>
+          {columns.map(col => (
+            <th key={col} style={{
+              padding: "12px 16px", textAlign: "left", color: "#e8f5e9",
+              fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".7px"
+            }}>{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.length === 0 ? (
+          <tr><td colSpan={columns.length} style={{ textAlign: "center", padding: 32, color: "#999" }}>No records found</td></tr>
+        ) : data.map((item, i) => (
+          <tr key={item.id || i} style={{ background: i % 2 === 0 ? "#fff" : "#f5faf3", transition: "background .15s" }}>
+            {renderRow(item)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const TD = ({ children, bold }) => (
+  <td style={{ padding: "11px 16px", borderBottom: "1px solid #edf4eb", fontWeight: bold ? 600 : 400 }}>{children}</td>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LOGIN PAGE
+// ═══════════════════════════════════════════════════════════════════════════════
+const LoginPage = ({ onLogin }) => {
+  const [u, setU] = useState(""), [p, setP] = useState(""), [err, setErr] = useState("");
+  const handle = () => {
+    if (u === "admin" && p === "tali123") onLogin();
+    else setErr("Invalid username or password.");
+  };
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: "linear-gradient(160deg,#0d2818 0%,#1b4332 40%,#2d6a4f 100%)",
+      fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden"
+    }}>
+      {/* decorative circles */}
+      {[[-120,-120,400,"rgba(255,255,255,.03)"],[300,200,250,"rgba(212,160,23,.07)"],[50,450,180,"rgba(255,255,255,.04)"]].map(([x,y,s,c],i)=>(
+        <div key={i} style={{ position:"absolute",left:x,top:y,width:s,height:s,borderRadius:"50%",background:c,pointerEvents:"none" }} />
+      ))}
+      <div style={{
+        background: "rgba(255,255,255,.07)", backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,.15)", borderRadius: 24,
+        padding: "3rem 2.5rem", width: 380, boxShadow: "0 30px 80px rgba(0,0,0,.5)"
+      }}>
+        {/* Logo placeholder */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: 20, margin: "0 auto 1rem",
+            background: "linear-gradient(135deg,#d4a017,#f5c842)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 8px 24px rgba(212,160,23,.4)"
+          }}>
+            <Icon name="leaf" size={40} />
+          </div>
+          <h1 style={{ margin: 0, color: "#fff", fontFamily: "'Playfair Display', serif", fontSize: "1.5rem" }}>
+            Tali Agro Farm
+          </h1>
+          <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,.6)", fontSize: 13 }}>
+            Farm & Processing Management System
+          </p>
+        </div>
+        <div style={{ marginBottom: "1rem" }}>
+          <input value={u} onChange={e=>setU(e.target.value)} placeholder="Username"
+            style={{
+              width:"100%",padding:"12px 16px",background:"rgba(255,255,255,.1)",
+              border:"1.5px solid rgba(255,255,255,.2)",borderRadius:10,color:"#fff",
+              fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:12
+            }}
+            onKeyDown={e=>e.key==="Enter"&&handle()}
+          />
+          <input type="password" value={p} onChange={e=>setP(e.target.value)} placeholder="Password"
+            style={{
+              width:"100%",padding:"12px 16px",background:"rgba(255,255,255,.1)",
+              border:"1.5px solid rgba(255,255,255,.2)",borderRadius:10,color:"#fff",
+              fontSize:15,outline:"none",boxSizing:"border-box"
+            }}
+            onKeyDown={e=>e.key==="Enter"&&handle()}
+          />
+        </div>
+        {err && <p style={{ color:"#ff8a80",fontSize:13,textAlign:"center",margin:"0 0 10px" }}>{err}</p>}
+        <button onClick={handle} style={{
+          width:"100%",padding:"13px",background:"linear-gradient(135deg,#d4a017,#e8b820)",
+          border:"none",borderRadius:10,color:"#1a1a00",fontWeight:800,fontSize:15,
+          cursor:"pointer",letterSpacing:".5px",boxShadow:"0 6px 18px rgba(212,160,23,.4)"
+        }}>Sign In →</button>
+        <p style={{ textAlign:"center",color:"rgba(255,255,255,.4)",fontSize:12,marginTop:16 }}>
+          admin / tali123
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+const Dashboard = ({ data }) => {
+  const totalSales = data.sales.reduce((s,x)=>s+Number(x.price)*Number(x.qty||1),0);
+  const totalExp = data.expenses.reduce((s,x)=>s+Number(x.amount),0);
+  const profit = totalSales - totalExp;
+  const stats = [
+    { label:"Crop Records", value: data.crops.length, icon:"crops", color:"#2e7d32", bg:"#e8f5e9" },
+    { label:"Livestock Groups", value: data.livestock.length, icon:"livestock", color:"#1565c0", bg:"#e3f2fd" },
+    { label:"Workers", value: data.workers.length, icon:"workers", color:"#6a1b9a", bg:"#f3e5f5" },
+    { label:"Inventory Items", value: data.inventory.length, icon:"inventory", color:"#e65100", bg:"#fff3e0" },
+    { label:"Harvest Records", value: data.harvest.length, icon:"harvest", color:"#00695c", bg:"#e0f2f1" },
+    { label:"Sales Records", value: data.sales.length, icon:"sales", color:"#c62828", bg:"#ffebee" },
+  ];
+  const recentSales = [...data.sales].slice(-3).reverse();
+  return (
+    <div>
+      <div style={{ marginBottom:"2rem" }}>
+        <h2 style={{ margin:"0 0 4px", fontFamily:"'Playfair Display',serif", color:"#1a3a2a", fontSize:"1.8rem" }}>
+          Good Morning 🌤️
+        </h2>
+        <p style={{ margin:0,color:"#6b8f5e" }}>Here's what's happening at Tali Agro Farm today.</p>
+      </div>
+      {/* Stat cards */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:16, marginBottom:28 }}>
+        {stats.map(s=>(
+          <div key={s.label} style={{
+            background:"#fff",borderRadius:14,padding:"1.2rem",
+            boxShadow:"0 2px 12px rgba(0,0,0,.07)",
+            borderLeft:`4px solid ${s.color}`,transition:"transform .2s"
+          }}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start" }}>
+              <div>
+                <div style={{ fontSize:28,fontWeight:800,color:s.color }}>{s.value}</div>
+                <div style={{ fontSize:12,color:"#888",marginTop:2 }}>{s.label}</div>
+              </div>
+              <div style={{ width:40,height:40,borderRadius:10,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",color:s.color }}>
+                <Icon name={s.icon} size={20} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Financial summary */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,marginBottom:28 }}>
+        {[
+          { label:"Total Revenue", value:`MK ${totalSales.toLocaleString()}`, color:"#2e7d32", icon:"↑" },
+          { label:"Total Expenses", value:`MK ${totalExp.toLocaleString()}`, color:"#c62828", icon:"↓" },
+          { label:"Net Profit", value:`MK ${profit.toLocaleString()}`, color: profit>=0?"#1565c0":"#c62828", icon:"=" },
+        ].map(c=>(
+          <div key={c.label} style={{
+            background:"#fff",borderRadius:14,padding:"1.5rem",
+            boxShadow:"0 2px 12px rgba(0,0,0,.07)",textAlign:"center"
+          }}>
+            <div style={{ fontSize:28,marginBottom:4 }}>{c.icon}</div>
+            <div style={{ fontSize:22,fontWeight:800,color:c.color }}>{c.value}</div>
+            <div style={{ fontSize:13,color:"#888" }}>{c.label}</div>
+          </div>
+        ))}
+      </div>
+      {/* Recent sales */}
+      <div style={{ background:"#fff",borderRadius:14,padding:"1.5rem",boxShadow:"0 2px 12px rgba(0,0,0,.07)" }}>
+        <h3 style={{ margin:"0 0 1rem",fontFamily:"'Playfair Display',serif",color:"#1a3a2a" }}>Recent Sales</h3>
+        <Table
+          columns={["Customer","Product","Amount","Status","Date"]}
+          data={recentSales}
+          renderRow={s=>[
+            <TD key="c" bold>{s.customer}</TD>,
+            <TD key="p">{s.product}</TD>,
+            <TD key="a">MK {(Number(s.price)*Number(s.qty||1)).toLocaleString()}</TD>,
+            <TD key="s"><Badge text={s.payment} color={s.payment==="Paid"?"green":"yellow"} /></TD>,
+            <TD key="d">{s.date}</TD>,
+          ]}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CROPS
+// ═══════════════════════════════════════════════════════════════════════════════
+const Crops = ({ crops, setCrops }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ name:"Maize", field:"", date:"", status:"Seedling", notes:"" });
+  const save = () => {
+    setCrops(p=>[...p,{ id:Date.now(),...form }]);
+    setModal(false); setForm({ name:"Maize",field:"",date:"",status:"Seedling",notes:"" });
+  };
+  const del = id => setCrops(p=>p.filter(c=>c.id!==id));
+  return (
+    <div>
+      <PageHeader icon="crops" title="Crop Management" subtitle="Track all crop varieties, planting dates and field sections" onAdd={()=>setModal(true)} addLabel="Add Crop" />
+      <Table
+        columns={["Crop","Farm Section","Plant Date","Status","Notes","Action"]}
+        data={crops}
+        renderRow={c=>[
+          <TD key="n" bold>{c.name}</TD>,
+          <TD key="f">{c.field}</TD>,
+          <TD key="d">{c.date}</TD>,
+          <TD key="s"><Badge text={c.status} color={c.status==="Harvested"?"blue":c.status==="Growing"?"green":"yellow"} /></TD>,
+          <TD key="no">{c.notes||"—"}</TD>,
+          <TD key="a"><button onClick={()=>del(c.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Crop Record" onClose={()=>setModal(false)}>
+          <Field label="Crop Type">
+            <Select value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}>
+              {["Maize","Soyabean","Beans","Groundnuts","Vegetables","Other"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <Field label="Farm Section"><Input placeholder="e.g. Block A" value={form.field} onChange={e=>setForm(p=>({...p,field:e.target.value}))} /></Field>
+          <Field label="Planting Date"><Input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} /></Field>
+          <Field label="Status">
+            <Select value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}>
+              {["Seedling","Growing","Flowering","Harvested"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <Field label="Notes"><Input placeholder="Optional notes" value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} /></Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#2e7d32,#43a047)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Crop</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LIVESTOCK
+// ═══════════════════════════════════════════════════════════════════════════════
+const Livestock = ({ livestock, setLivestock }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ type:"Cattle",breed:"",tag:"",health:"Healthy",vaccination:"Up to date",count:1 });
+  const save = () => { setLivestock(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setLivestock(p=>p.filter(x=>x.id!==id));
+  return (
+    <div>
+      <PageHeader icon="livestock" title="Livestock Management" subtitle="Track all farm animals, health records and vaccinations" onAdd={()=>setModal(true)} addLabel="Add Animal" />
+      <Table
+        columns={["Type","Breed","Tag #","Count","Health","Vaccination","Action"]}
+        data={livestock}
+        renderRow={a=>[
+          <TD key="t" bold>{a.type}</TD>,
+          <TD key="b">{a.breed}</TD>,
+          <TD key="tg">{a.tag}</TD>,
+          <TD key="c">{a.count}</TD>,
+          <TD key="h"><Badge text={a.health} color={a.health==="Healthy"?"green":"red"} /></TD>,
+          <TD key="v"><Badge text={a.vaccination} color={a.vaccination==="Up to date"?"blue":"yellow"} /></TD>,
+          <TD key="a"><button onClick={()=>del(a.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Livestock" onClose={()=>setModal(false)}>
+          <Field label="Animal Type">
+            <Select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}>
+              {["Cattle","Goat","Sheep","Poultry","Pig","Other"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <Field label="Breed"><Input placeholder="e.g. Friesian" value={form.breed} onChange={e=>setForm(p=>({...p,breed:e.target.value}))} /></Field>
+          <Field label="Tag Number"><Input placeholder="e.g. COW-001" value={form.tag} onChange={e=>setForm(p=>({...p,tag:e.target.value}))} /></Field>
+          <Field label="Count"><Input type="number" min="1" value={form.count} onChange={e=>setForm(p=>({...p,count:e.target.value}))} /></Field>
+          <Field label="Health Status">
+            <Select value={form.health} onChange={e=>setForm(p=>({...p,health:e.target.value}))}>
+              {["Healthy","Sick","Under Treatment","Quarantined"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <Field label="Vaccination Status">
+            <Select value={form.vaccination} onChange={e=>setForm(p=>({...p,vaccination:e.target.value}))}>
+              {["Up to date","Due soon","Overdue","Not vaccinated"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#1565c0,#1976d2)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Animal</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  WORKERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const Workers = ({ workers, setWorkers }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ name:"",role:"",phone:"",salary:"",status:"Active" });
+  const save = () => { setWorkers(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setWorkers(p=>p.filter(x=>x.id!==id));
+  const totalPayroll = workers.reduce((s,w)=>s+Number(w.salary||0),0);
+  return (
+    <div>
+      <PageHeader icon="workers" title="Worker Management" subtitle={`${workers.length} staff · Monthly payroll: MK ${totalPayroll.toLocaleString()}`} onAdd={()=>setModal(true)} addLabel="Add Worker" />
+      <Table
+        columns={["Name","Role","Phone","Salary (MK/mo)","Status","Action"]}
+        data={workers}
+        renderRow={w=>[
+          <TD key="n" bold>{w.name}</TD>,
+          <TD key="r">{w.role}</TD>,
+          <TD key="p">{w.phone}</TD>,
+          <TD key="s">MK {Number(w.salary||0).toLocaleString()}</TD>,
+          <TD key="st"><Badge text={w.status} color={w.status==="Active"?"green":"gray"} /></TD>,
+          <TD key="a"><button onClick={()=>del(w.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Worker" onClose={()=>setModal(false)}>
+          <Field label="Full Name"><Input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} /></Field>
+          <Field label="Role/Position"><Input placeholder="e.g. Field Supervisor" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} /></Field>
+          <Field label="Phone"><Input value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))} /></Field>
+          <Field label="Monthly Salary (MK)"><Input type="number" value={form.salary} onChange={e=>setForm(p=>({...p,salary:e.target.value}))} /></Field>
+          <Field label="Status">
+            <Select value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}>
+              {["Active","On Leave","Inactive"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#6a1b9a,#7b1fa2)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Worker</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  INVENTORY
+// ═══════════════════════════════════════════════════════════════════════════════
+const Inventory = ({ inventory, setInventory }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ item:"",qty:"",unit:"Bags",supplier:"",date:"",category:"Seeds" });
+  const save = () => { setInventory(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setInventory(p=>p.filter(x=>x.id!==id));
+  return (
+    <div>
+      <PageHeader icon="inventory" title="Inventory Management" subtitle="Seeds, fertilizers, feeds, tools and pesticides" onAdd={()=>setModal(true)} addLabel="Add Item" />
+      <Table
+        columns={["Item","Category","Quantity","Supplier","Date","Action"]}
+        data={inventory}
+        renderRow={i=>[
+          <TD key="i" bold>{i.item}</TD>,
+          <TD key="c"><Badge text={i.category} color="blue" /></TD>,
+          <TD key="q">{i.qty} {i.unit}</TD>,
+          <TD key="s">{i.supplier}</TD>,
+          <TD key="d">{i.date}</TD>,
+          <TD key="a"><button onClick={()=>del(i.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Inventory Item" onClose={()=>setModal(false)}>
+          <Field label="Item Name"><Input value={form.item} onChange={e=>setForm(p=>({...p,item:e.target.value}))} /></Field>
+          <Field label="Category">
+            <Select value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
+              {["Seeds","Fertilizer","Animal Feed","Tools","Pesticides","Other"].map(x=><option key={x}>{x}</option>)}
+            </Select>
+          </Field>
+          <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr",gap:12 }}>
+            <Field label="Quantity"><Input type="number" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))} /></Field>
+            <Field label="Unit"><Input value={form.unit} onChange={e=>setForm(p=>({...p,unit:e.target.value}))} /></Field>
+          </div>
+          <Field label="Supplier"><Input value={form.supplier} onChange={e=>setForm(p=>({...p,supplier:e.target.value}))} /></Field>
+          <Field label="Date Received"><Input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} /></Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Item</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HARVEST
+// ═══════════════════════════════════════════════════════════════════════════════
+const Harvest = ({ harvest, setHarvest }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ crop:"Maize",harvestDate:"",qty:"",unit:"Bags",location:"Store A",quality:"Grade A" });
+  const save = () => { setHarvest(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setHarvest(p=>p.filter(x=>x.id!==id));
+  const totalBags = harvest.reduce((s,h)=>s+Number(h.qty||0),0);
+  return (
+    <div>
+      <PageHeader icon="harvest" title="Harvest Tracking" subtitle={`Total harvested: ${totalBags} units across ${harvest.length} records`} onAdd={()=>setModal(true)} addLabel="Record Harvest" />
+      <Table
+        columns={["Crop","Harvest Date","Quantity","Storage Location","Quality","Action"]}
+        data={harvest}
+        renderRow={h=>[
+          <TD key="c" bold>{h.crop}</TD>,
+          <TD key="d">{h.harvestDate}</TD>,
+          <TD key="q">{h.qty} {h.unit}</TD>,
+          <TD key="l">{h.location}</TD>,
+          <TD key="ql"><Badge text={h.quality} color={h.quality==="Grade A"?"green":h.quality==="Grade B"?"yellow":"gray"} /></TD>,
+          <TD key="a"><button onClick={()=>del(h.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Record Harvest" onClose={()=>setModal(false)}>
+          <Field label="Crop"><Select value={form.crop} onChange={e=>setForm(p=>({...p,crop:e.target.value}))}>{["Maize","Soyabean","Beans","Groundnuts","Vegetables","Other"].map(x=><option key={x}>{x}</option>)}</Select></Field>
+          <Field label="Harvest Date"><Input type="date" value={form.harvestDate} onChange={e=>setForm(p=>({...p,harvestDate:e.target.value}))} /></Field>
+          <div style={{ display:"grid",gridTemplateColumns:"2fr 1fr",gap:12 }}>
+            <Field label="Quantity"><Input type="number" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))} /></Field>
+            <Field label="Unit"><Input value={form.unit} onChange={e=>setForm(p=>({...p,unit:e.target.value}))} /></Field>
+          </div>
+          <Field label="Storage Location"><Input value={form.location} onChange={e=>setForm(p=>({...p,location:e.target.value}))} /></Field>
+          <Field label="Quality Grade"><Select value={form.quality} onChange={e=>setForm(p=>({...p,quality:e.target.value}))}>{["Grade A","Grade B","Grade C","Rejected"].map(x=><option key={x}>{x}</option>)}</Select></Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#00695c,#00897b)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Harvest</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  PROCESSING
+// ═══════════════════════════════════════════════════════════════════════════════
+const Processing = ({ processing, setProcessing }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ rawMaterial:"Maize",product:"Maize Flour",date:"",batch:"",inputQty:"",outputQty:"",unit:"Bags" });
+  const save = () => { setProcessing(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setProcessing(p=>p.filter(x=>x.id!==id));
+  return (
+    <div>
+      <PageHeader icon="processing" title="Processing Unit" subtitle="Track raw material processing into finished products" onAdd={()=>setModal(true)} addLabel="Add Batch" />
+      <Table
+        columns={["Raw Material","Product","Batch #","Input Qty","Output Qty","Date","Action"]}
+        data={processing}
+        renderRow={r=>[
+          <TD key="rm" bold>{r.rawMaterial}</TD>,
+          <TD key="pr">{r.product}</TD>,
+          <TD key="b">{r.batch}</TD>,
+          <TD key="iq">{r.inputQty} {r.unit}</TD>,
+          <TD key="oq">{r.outputQty} {r.unit}</TD>,
+          <TD key="d">{r.date}</TD>,
+          <TD key="a"><button onClick={()=>del(r.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Processing Batch" onClose={()=>setModal(false)}>
+          <Field label="Raw Material"><Select value={form.rawMaterial} onChange={e=>setForm(p=>({...p,rawMaterial:e.target.value}))}>{["Maize","Groundnuts","Soyabean","Beans","Other"].map(x=><option key={x}>{x}</option>)}</Select></Field>
+          <Field label="Finished Product"><Input value={form.product} onChange={e=>setForm(p=>({...p,product:e.target.value}))} placeholder="e.g. Maize Flour" /></Field>
+          <Field label="Batch Number"><Input value={form.batch} onChange={e=>setForm(p=>({...p,batch:e.target.value}))} placeholder="e.g. MF-2026-01" /></Field>
+          <Field label="Processing Date"><Input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} /></Field>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12 }}>
+            <Field label="Input Qty"><Input type="number" value={form.inputQty} onChange={e=>setForm(p=>({...p,inputQty:e.target.value}))} /></Field>
+            <Field label="Output Qty"><Input type="number" value={form.outputQty} onChange={e=>setForm(p=>({...p,outputQty:e.target.value}))} /></Field>
+            <Field label="Unit"><Input value={form.unit} onChange={e=>setForm(p=>({...p,unit:e.target.value}))} /></Field>
+          </div>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#37474f,#546e7a)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Batch</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SALES
+// ═══════════════════════════════════════════════════════════════════════════════
+const Sales = ({ sales, setSales }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ customer:"",phone:"",product:"",qty:"",price:"",payment:"Paid",date:"" });
+  const save = () => { setSales(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setSales(p=>p.filter(x=>x.id!==id));
+  const totalRev = sales.reduce((s,x)=>s+(Number(x.price||0)*Number(x.qty||1)),0);
+  const paidCount = sales.filter(s=>s.payment==="Paid").length;
+  return (
+    <div>
+      <PageHeader icon="sales" title="Sales & Customers" subtitle={`${sales.length} transactions · ${paidCount} paid · MK ${totalRev.toLocaleString()} revenue`} onAdd={()=>setModal(true)} addLabel="New Sale" />
+      <Table
+        columns={["Customer","Phone","Product","Qty","Unit Price","Total","Status","Date","Action"]}
+        data={sales}
+        renderRow={s=>[
+          <TD key="c" bold>{s.customer}</TD>,
+          <TD key="ph">{s.phone}</TD>,
+          <TD key="p">{s.product}</TD>,
+          <TD key="q">{s.qty}</TD>,
+          <TD key="pr">MK {Number(s.price||0).toLocaleString()}</TD>,
+          <TD key="t">MK {(Number(s.price||0)*Number(s.qty||1)).toLocaleString()}</TD>,
+          <TD key="st"><Badge text={s.payment} color={s.payment==="Paid"?"green":"yellow"} /></TD>,
+          <TD key="d">{s.date}</TD>,
+          <TD key="a"><button onClick={()=>del(s.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Record Sale" onClose={()=>setModal(false)}>
+          <Field label="Customer Name"><Input value={form.customer} onChange={e=>setForm(p=>({...p,customer:e.target.value}))} /></Field>
+          <Field label="Phone"><Input value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))} /></Field>
+          <Field label="Product"><Input value={form.product} onChange={e=>setForm(p=>({...p,product:e.target.value}))} placeholder="e.g. Maize Flour" /></Field>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+            <Field label="Quantity"><Input type="number" value={form.qty} onChange={e=>setForm(p=>({...p,qty:e.target.value}))} /></Field>
+            <Field label="Unit Price (MK)"><Input type="number" value={form.price} onChange={e=>setForm(p=>({...p,price:e.target.value}))} /></Field>
+          </div>
+          <Field label="Payment Status"><Select value={form.payment} onChange={e=>setForm(p=>({...p,payment:e.target.value}))}>{["Paid","Pending","Partial"].map(x=><option key={x}>{x}</option>)}</Select></Field>
+          <Field label="Sale Date"><Input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} /></Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#c62828,#e53935)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Sale</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  EXPENSES
+// ═══════════════════════════════════════════════════════════════════════════════
+const Expenses = ({ expenses, setExpenses }) => {
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({ date:"",type:"Seeds Purchase",amount:"",description:"" });
+  const save = () => { setExpenses(p=>[...p,{ id:Date.now(),...form }]); setModal(false); };
+  const del = id => setExpenses(p=>p.filter(x=>x.id!==id));
+  const total = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const byType = expenses.reduce((acc,e)=>{ acc[e.type]=(acc[e.type]||0)+Number(e.amount||0); return acc; },{});
+  return (
+    <div>
+      <PageHeader icon="expenses" title="Expense Management" subtitle={`Total expenses: MK ${total.toLocaleString()}`} onAdd={()=>setModal(true)} addLabel="Add Expense" />
+      {/* Summary cards */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:20 }}>
+        {Object.entries(byType).map(([type,amt])=>(
+          <div key={type} style={{ background:"#fff",borderRadius:12,padding:"1rem",boxShadow:"0 2px 8px rgba(0,0,0,.06)",borderLeft:"3px solid #e65100" }}>
+            <div style={{ fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:".5px" }}>{type}</div>
+            <div style={{ fontSize:18,fontWeight:800,color:"#bf360c",marginTop:2 }}>MK {Number(amt).toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+      <Table
+        columns={["Date","Expense Type","Amount (MK)","Description","Action"]}
+        data={expenses}
+        renderRow={e=>[
+          <TD key="d">{e.date}</TD>,
+          <TD key="t" bold>{e.type}</TD>,
+          <TD key="a" bold>MK {Number(e.amount||0).toLocaleString()}</TD>,
+          <TD key="de">{e.description||"—"}</TD>,
+          <TD key="ac"><button onClick={()=>del(e.id)} style={{ background:"#ffebee",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",color:"#c62828" }}>Delete</button></TD>,
+        ]}
+      />
+      {modal && (
+        <Modal title="Add Expense" onClose={()=>setModal(false)}>
+          <Field label="Date"><Input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} /></Field>
+          <Field label="Expense Type"><Select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}>{["Seeds Purchase","Fertilizer","Animal Feed","Salaries","Equipment Repair","Transport","Utilities","Other"].map(x=><option key={x}>{x}</option>)}</Select></Field>
+          <Field label="Amount (MK)"><Input type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} /></Field>
+          <Field label="Description"><Input value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} placeholder="Brief description" /></Field>
+          <button onClick={save} style={{ width:"100%",padding:12,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:10,fontWeight:700,cursor:"pointer" }}>Save Expense</button>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  REPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+const Reports = ({ data }) => {
+  const totalRev = data.sales.reduce((s,x)=>s+(Number(x.price||0)*Number(x.qty||1)),0);
+  const totalExp = data.expenses.reduce((s,x)=>s+Number(x.amount||0),0);
+  const profit = totalRev - totalExp;
+  const margin = totalRev > 0 ? ((profit/totalRev)*100).toFixed(1) : 0;
+  const totalHarvest = data.harvest.reduce((s,h)=>s+Number(h.qty||0),0);
+  const totalAnimals = data.livestock.reduce((s,l)=>s+Number(l.count||0),0);
+  const expByType = data.expenses.reduce((a,e)=>{ a[e.type]=(a[e.type]||0)+Number(e.amount||0); return a; },{});
+  const salesByProduct = data.sales.reduce((a,s)=>{ const k=s.product; a[k]=(a[k]||0)+(Number(s.price||0)*Number(s.qty||1)); return a; },{});
+  const ReportCard = ({ title, children, color="#2e7d32" }) => (
+    <div style={{ background:"#fff",borderRadius:14,padding:"1.5rem",boxShadow:"0 2px 12px rgba(0,0,0,.07)",marginBottom:20,borderTop:`4px solid ${color}` }}>
+      <h3 style={{ margin:"0 0 1rem",fontFamily:"'Playfair Display',serif",color:"#1a3a2a" }}>{title}</h3>
+      {children}
+    </div>
+  );
+  const Bar = ({ label, value, max, color }) => (
+    <div style={{ marginBottom:10 }}>
+      <div style={{ display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4 }}>
+        <span style={{ fontWeight:600 }}>{label}</span>
+        <span style={{ color:"#888" }}>MK {Number(value).toLocaleString()}</span>
+      </div>
+      <div style={{ background:"#f0f0f0",borderRadius:6,height:10 }}>
+        <div style={{ width:`${Math.min(100,(value/max)*100)}%`,background:color,borderRadius:6,height:10,transition:"width .5s" }} />
+      </div>
+    </div>
+  );
+  const maxExp = Math.max(...Object.values(expByType), 1);
+  const maxSales = Math.max(...Object.values(salesByProduct), 1);
+  return (
+    <div>
+      <PageHeader icon="reports" title="Reports & Analytics" subtitle="Comprehensive farm performance overview" />
+      {/* P&L Summary */}
+      <ReportCard title="📊 Profit & Loss Summary" color="#2e7d32">
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16 }}>
+          {[
+            { l:"Total Revenue",v:`MK ${totalRev.toLocaleString()}`,c:"#2e7d32" },
+            { l:"Total Expenses",v:`MK ${totalExp.toLocaleString()}`,c:"#c62828" },
+            { l:"Net Profit",v:`MK ${profit.toLocaleString()}`,c:profit>=0?"#1565c0":"#c62828" },
+            { l:"Profit Margin",v:`${margin}%`,c:profit>=0?"#00695c":"#c62828" },
+          ].map(x=>(
+            <div key={x.l} style={{ textAlign:"center",padding:"1rem",background:"#f8fdf6",borderRadius:10 }}>
+              <div style={{ fontSize:22,fontWeight:800,color:x.c }}>{x.v}</div>
+              <div style={{ fontSize:12,color:"#888" }}>{x.l}</div>
+            </div>
+          ))}
+        </div>
+      </ReportCard>
+      {/* Production summary */}
+      <ReportCard title="🌾 Production Summary" color="#4caf50">
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:16 }}>
+          {[
+            { l:"Crop Records",v:data.crops.length },
+            { l:"Total Harvest",v:`${totalHarvest} units` },
+            { l:"Processing Batches",v:data.processing.length },
+            { l:"Total Animals",v:totalAnimals },
+          ].map(x=>(
+            <div key={x.l} style={{ textAlign:"center",padding:"1rem",background:"#e8f5e9",borderRadius:10 }}>
+              <div style={{ fontSize:22,fontWeight:800,color:"#1b5e20" }}>{x.v}</div>
+              <div style={{ fontSize:12,color:"#4a7c59" }}>{x.l}</div>
+            </div>
+          ))}
+        </div>
+      </ReportCard>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:20 }}>
+        <ReportCard title="💰 Expenses by Category" color="#f57c00">
+          {Object.entries(expByType).map(([k,v])=><Bar key={k} label={k} value={v} max={maxExp} color="#f57c00" />)}
+        </ReportCard>
+        <ReportCard title="🛒 Revenue by Product" color="#1565c0">
+          {Object.entries(salesByProduct).map(([k,v])=><Bar key={k} label={k} value={v} max={maxSales} color="#1565c0" />)}
+        </ReportCard>
+      </div>
+      {/* Workers payroll */}
+      <ReportCard title="👷 Workforce Summary" color="#6a1b9a">
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:16 }}>
+          {[
+            { l:"Total Staff",v:data.workers.length },
+            { l:"Active Workers",v:data.workers.filter(w=>w.status==="Active").length },
+            { l:"Monthly Payroll",v:`MK ${data.workers.reduce((s,w)=>s+Number(w.salary||0),0).toLocaleString()}` },
+            { l:"Inventory Items",v:data.inventory.length },
+          ].map(x=>(
+            <div key={x.l} style={{ textAlign:"center",padding:"1rem",background:"#f3e5f5",borderRadius:10 }}>
+              <div style={{ fontSize:22,fontWeight:800,color:"#4a148c" }}>{x.v}</div>
+              <div style={{ fontSize:12,color:"#7b1fa2" }}>{x.l}</div>
+            </div>
+          ))}
+        </div>
+      </ReportCard>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MAIN APP
+// ═══════════════════════════════════════════════════════════════════════════════
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [page, setPage] = useState("dashboard");
+  const [data, setData] = useState(SEED);
+  const setter = key => fn => setData(prev => ({ ...prev, [key]: typeof fn === "function" ? fn(prev[key]) : fn }));
+
+  const nav = [
+    { id:"dashboard", label:"Dashboard", icon:"dashboard" },
+    { id:"crops", label:"Crops", icon:"crops" },
+    { id:"livestock", label:"Livestock", icon:"livestock" },
+    { id:"workers", label:"Workers", icon:"workers" },
+    { id:"inventory", label:"Inventory", icon:"inventory" },
+    { id:"harvest", label:"Harvest", icon:"harvest" },
+    { id:"processing", label:"Processing", icon:"processing" },
+    { id:"sales", label:"Sales", icon:"sales" },
+    { id:"expenses", label:"Expenses", icon:"expenses" },
+    { id:"reports", label:"Reports", icon:"reports" },
+  ];
+
+  if (!loggedIn) return <LoginPage onLogin={()=>setLoggedIn(true)} />;
+
+  const pages = {
+    dashboard: <Dashboard data={data} />,
+    crops: <Crops crops={data.crops} setCrops={setter("crops")} />,
+    livestock: <Livestock livestock={data.livestock} setLivestock={setter("livestock")} />,
+    workers: <Workers workers={data.workers} setWorkers={setter("workers")} />,
+    inventory: <Inventory inventory={data.inventory} setInventory={setter("inventory")} />,
+    harvest: <Harvest harvest={data.harvest} setHarvest={setter("harvest")} />,
+    processing: <Processing processing={data.processing} setProcessing={setter("processing")} />,
+    sales: <Sales sales={data.sales} setSales={setter("sales")} />,
+    expenses: <Expenses expenses={data.expenses} setExpenses={setter("expenses")} />,
+    reports: <Reports data={data} />,
+  };
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; }
+        ::-webkit-scrollbar-thumb { background: #b0cba8; border-radius: 3px; }
+        input::placeholder { color: #aab; }
+        input:focus, select:focus { border-color: #2e7d32 !important; box-shadow: 0 0 0 3px rgba(46,125,50,.12); }
+      `}</style>
+      <div style={{ display:"flex", minHeight:"100vh", background:"#f0f5ee", fontFamily:"'DM Sans',sans-serif" }}>
+        {/* SIDEBAR */}
+        <div style={{
+          width: 240, background: "linear-gradient(180deg,#0d2818 0%,#1a3a2a 60%,#1b4332 100%)",
+          display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh",
+          overflowY: "auto", flexShrink: 0
+        }}>
+          {/* Logo area */}
+          <div style={{ padding: "1.8rem 1.5rem 1rem", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: "linear-gradient(135deg,#d4a017,#f5c842)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#1a1a00", flexShrink: 0, boxShadow: "0 4px 12px rgba(212,160,23,.4)"
+              }}>
+                <Icon name="leaf" size={22} />
+              </div>
+              <div>
+                <div style={{ color: "#fff", fontWeight: 800, fontSize: 14, lineHeight: 1.2 }}>Tali Agro</div>
+                <div style={{ color: "rgba(255,255,255,.45)", fontSize: 11 }}>Farm & Processing</div>
+              </div>
+            </div>
+          </div>
+          {/* Nav */}
+          <nav style={{ flex: 1, padding: "1rem 0.75rem" }}>
+            {nav.map(n => {
+              const active = page === n.id;
+              return (
+                <button key={n.id} onClick={() => setPage(n.id)} style={{
+                  display: "flex", alignItems: "center", gap: 10, width: "100%",
+                  padding: "10px 14px", marginBottom: 2, border: "none", cursor: "pointer",
+                  borderRadius: 10, textAlign: "left", fontSize: 14, fontWeight: active ? 700 : 500,
+                  background: active ? "rgba(212,160,23,.2)" : "transparent",
+                  color: active ? "#f5c842" : "rgba(255,255,255,.65)",
+                  transition: "all .15s",
+                  borderLeft: active ? "3px solid #f5c842" : "3px solid transparent"
+                }}>
+                  <span style={{ opacity: active ? 1 : .7 }}><Icon name={n.icon} size={17} /></span>
+                  {n.label}
+                </button>
+              );
+            })}
+          </nav>
+          {/* Logout */}
+          <div style={{ padding: "1rem 0.75rem", borderTop: "1px solid rgba(255,255,255,.08)" }}>
+            <button onClick={() => setLoggedIn(false)} style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%",
+              padding: "10px 14px", border: "none", cursor: "pointer", borderRadius: 10,
+              background: "rgba(255,100,100,.1)", color: "#ff8a80", fontSize: 14, fontWeight: 600
+            }}>
+              <Icon name="logout" size={17} /> Sign Out
+            </button>
+          </div>
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div style={{ flex: 1, overflow: "auto" }}>
+          {/* Top bar */}
+          <div style={{
+            background: "#fff", borderBottom: "1px solid #e4ede0",
+            padding: "1rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center",
+            position: "sticky", top: 0, zIndex: 10
+          }}>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#1a3a2a" }}>
+                {nav.find(n=>n.id===page)?.label}
+              </div>
+              <div style={{ fontSize: 12, color: "#888" }}>
+                Tali Agro Farm & Processing Ltd. · March 2026
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1a3a2a" }}>Admin</div>
+                <div style={{ fontSize: 11, color: "#888" }}>Farm Manager</div>
+              </div>
+              <div style={{
+                width: 38, height: 38, borderRadius: "50%",
+                background: "linear-gradient(135deg,#2e7d32,#43a047)",
+                display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+                fontWeight: 800, fontSize: 15
+              }}>A</div>
+            </div>
+          </div>
+          {/* Page content */}
+          <div style={{ padding: "2rem", maxWidth: 1200 }}>
+            {pages[page]}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
