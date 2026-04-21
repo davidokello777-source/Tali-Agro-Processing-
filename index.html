@@ -1,1 +1,1045 @@
-https://claude.ai/api/organizations/aa66941e-c70b-4887-aa68-e9350a77de77/conversations/d7eda557-293d-4c70-ba40-64282e3215c3/wiggle/download-file?path=%2Fmnt%2Fuser-data%2Foutputs%2Ftali-agro-system.zip
+import { useState, useMemo } from "react";
+
+/* ══════════ CURRENCY ══════════════════════════════════════════ */
+const ugx = v => `UGX ${Number(v || 0).toLocaleString()}`;
+
+/* ══════════ DEFAULT USERS ════════════════════════════════════ */
+const INIT_USERS = [
+  { id:1, username:"admin",   password:"tali123", role:"admin",   name:"System Admin",  color:"#d4a017", active:true },
+  { id:2, username:"manager", password:"mgr456",  role:"manager", name:"Farm Manager",  color:"#43a047", active:true },
+  { id:3, username:"viewer",  password:"view789", role:"viewer",  name:"Farm Viewer",   color:"#1565c0", active:true },
+];
+const ROLE_INFO = { admin:{label:"Administrator",c:"#d4a017"}, manager:{label:"Farm Manager",c:"#43a047"}, viewer:{label:"Viewer",c:"#1565c0"} };
+
+/* ══════════ SEED DATA ════════════════════════════════════════ */
+const SEED = {
+  suppliers:[
+    {id:1,name:"Seedco Uganda",      category:"Seeds",      contact:"James Okullo",   phone:"+256 772 100 200",email:"seedco@ug.com",    status:"Active"},
+    {id:2,name:"Agri-Input Ltd",     category:"Fertilizer", contact:"Sarah Namukasa", phone:"+256 703 300 400",email:"agri@inputs.ug",   status:"Active"},
+    {id:3,name:"Livestock Feeds UG", category:"Animal Feed",contact:"Peter Ssali",    phone:"+256 785 500 600",email:"feeds@livestock.ug",status:"Active"},
+    {id:4,name:"Farm Tools Ltd",     category:"Tools",      contact:"Grace Apio",     phone:"+256 756 700 800",email:"tools@farmug.com", status:"Active"},
+    {id:5,name:"AgroVet Supplies",   category:"Veterinary", contact:"Dr. Mubarak",    phone:"+256 701 900 010",email:"vet@agrovet.ug",   status:"Active"},
+  ],
+  crops:[
+    {id:1,name:"Maize",variety:"SC403",field:"Block A",area:"1.5",areaUnit:"acres",season:"Season A 2025/26",plantingMethod:"Direct Seeding",plantDate:"2025-11-10",harvestDate:"2026-03-15",seedQty:"15",seedUnit:"kg",seedLot:"SL-2025-001",seedSupplier:"Seedco Uganda",plantPopulation:"35000",rowSpacing:"75",soilType:"Clay-Loam",lastSoilTest:"2025-09-15",soilPH:"6.2",basalFert:"DAP",basalQty:"50",basalDate:"2025-11-10",topDress1:"CAN",topDress1Qty:"40",topDress1Date:"2025-12-15",topDress2:"Urea",topDress2Qty:"30",topDress2Date:"2026-01-20",organicManure:"Farmyard Manure",organicQty:"2",organicDate:"2025-10-01",irrigation:"Rain-fed",herbicide:"Primextra Gold",herbicideDate:"2025-11-15",herbicideRate:"3L/ha",insecticide:"Lambda-cyhalothrin",insecticideDate:"2026-01-10",insecticideRate:"0.5L/ha",fungicide:"",fungicideDate:"",fungicideRate:"",lastScouting:"2026-01-25",pestObserved:"Stalk borer — minor",status:"Growing",cropCondition:"Good",lastInspection:"2026-01-25",expectedYieldPerAcre:"30",totalExpectedYield:"45",yieldUnit:"bags",inputCost:"3500000",expectedRevenue:"6750000",notes:"SC403 performing well. Monitor stalk borer closely."},
+    {id:2,name:"Soyabean",variety:"Nabe 4",field:"Block B",area:"0.75",areaUnit:"acres",season:"Season A 2025/26",plantingMethod:"Direct Seeding",plantDate:"2025-11-20",harvestDate:"2026-03-01",seedQty:"18",seedUnit:"kg",seedLot:"SB-2025-001",seedSupplier:"NACRRI",plantPopulation:"200000",rowSpacing:"45",soilType:"Sandy-Loam",lastSoilTest:"2025-09-15",soilPH:"6.5",basalFert:"SSP",basalQty:"25",basalDate:"2025-11-20",topDress1:"",topDress1Qty:"",topDress1Date:"",topDress2:"",topDress2Qty:"",topDress2Date:"",organicManure:"Rhizobium Inoculant",organicQty:"1",organicDate:"2025-11-20",irrigation:"Rain-fed",herbicide:"Dual Gold",herbicideDate:"2025-11-22",herbicideRate:"1.5L/ha",insecticide:"",insecticideDate:"",insecticideRate:"",fungicide:"",fungicideDate:"",fungicideRate:"",lastScouting:"2026-01-20",pestObserved:"None",status:"Growing",cropCondition:"Excellent",lastInspection:"2026-01-20",expectedYieldPerAcre:"20",totalExpectedYield:"15",yieldUnit:"bags",inputCost:"1800000",expectedRevenue:"2850000",notes:"Good nodulation. Inoculated seed performing well."},
+    {id:3,name:"Groundnuts",variety:"SERENUT 4T",field:"Block C",area:"0.75",areaUnit:"acres",season:"Season A 2025/26",plantingMethod:"Direct Seeding",plantDate:"2025-12-01",harvestDate:"2026-04-01",seedQty:"50",seedUnit:"kg",seedLot:"GN-2025-001",seedSupplier:"MAAIF Store",plantPopulation:"133000",rowSpacing:"45",soilType:"Sandy",lastSoilTest:"",soilPH:"6.0",basalFert:"SSP",basalQty:"20",basalDate:"2025-12-01",topDress1:"CAN",topDress1Qty:"15",topDress1Date:"2026-01-05",topDress2:"",topDress2Qty:"",topDress2Date:"",organicManure:"",organicQty:"",organicDate:"",irrigation:"Rain-fed",herbicide:"Basagran",herbicideDate:"2025-12-05",herbicideRate:"1L/ha",insecticide:"",insecticideDate:"",insecticideRate:"",fungicide:"Mancozeb",fungicideDate:"2026-01-15",fungicideRate:"2.5kg/ha",lastScouting:"2026-01-22",pestObserved:"Early leaf spot — sprayed",status:"Seedling",cropCondition:"Good",lastInspection:"2026-01-22",expectedYieldPerAcre:"15",totalExpectedYield:"11",yieldUnit:"bags",inputCost:"1500000",expectedRevenue:"2250000",notes:"New variety trial."},
+  ],
+  livestock:[
+    {id:1,species:"Cattle",breed:"Friesian",tag:"COW-HERD-01",sex:"Female",count:"12",ageGroup:"Adult",dob:"2022-03-15",acquired:"2022-03-15",source:"Born on Farm",purchaseCost:"0",currentValuePerHead:"4500000",health:"Healthy",bodyConditionScore:"3.5",lastVetVisit:"2026-01-15",vetContact:"Dr. Mubarak +256 701 900 010",vaccineFMD:"2025-10-01",vaccineCBPP:"2025-10-01",vaccineLSD:"2025-11-01",vaccineND:"",vaccineGumboro:"",vaccineBrucellosis:"2025-09-15",dewormDate:"2026-01-01",dewormProduct:"Albendazole 2.5%",dewormDose:"10ml/head",lastTreatDate:"",lastTreatCondition:"",lastTreatGiven:"",quarantine:"No",housing:"Semi-confined",feedType:"Pasture + Concentrates",dailyFeedPerHead:"8",waterSource:"Borehole",feedSupplier:"Livestock Feeds UG",breedingStatus:"Lactating",lastServiceDate:"2025-09-20",expectedCalvingDate:"",lastBirthDate:"2025-06-15",offspringThisSeason:"8",breedingBullID:"BULL-001",dailyMilkYield:"18",lactationNumber:"3",milkingFrequency:"2x daily",weeklyEggProd:"",fcr:"",mortalityCount:"",mortalityRate:"",currentWeight:"480",adg:"0.8",notes:"High-yielding Friesian herd. Main dairy unit."},
+    {id:2,species:"Poultry",breed:"Broiler Ross 308",tag:"BROILER-BATCH-01",sex:"Mixed",count:"200",ageGroup:"Grower",dob:"2026-01-15",acquired:"2026-01-15",source:"Hatchery",purchaseCost:"900000",currentValuePerHead:"12000",health:"Healthy",bodyConditionScore:"3",lastVetVisit:"2026-01-20",vetContact:"Dr. Mubarak +256 701 900 010",vaccineFMD:"",vaccineCBPP:"",vaccineLSD:"",vaccineND:"2026-01-17",vaccineGumboro:"2026-01-22",vaccineBrucellosis:"",dewormDate:"",dewormProduct:"",dewormDose:"",lastTreatDate:"",lastTreatCondition:"",lastTreatGiven:"",quarantine:"No",housing:"Confined",feedType:"Broiler Concentrates",dailyFeedPerHead:"0.12",waterSource:"Water Tank",feedSupplier:"Livestock Feeds UG",breedingStatus:"N/A",lastServiceDate:"",expectedCalvingDate:"",lastBirthDate:"",offspringThisSeason:"",breedingBullID:"",dailyMilkYield:"",lactationNumber:"",milkingFrequency:"",weeklyEggProd:"0",fcr:"1.8",mortalityCount:"3",mortalityRate:"1.5",currentWeight:"1.8",adg:"0.055",notes:"Batch 1 of 2026. Target slaughter at 2.2kg, day 35."},
+    {id:3,species:"Goat",breed:"Boer",tag:"GT-HERD-01",sex:"Mixed",count:"24",ageGroup:"Mixed",dob:"",acquired:"2024-06-01",source:"Local Market",purchaseCost:"4800000",currentValuePerHead:"350000",health:"Healthy",bodyConditionScore:"3",lastVetVisit:"2025-12-10",vetContact:"Dr. Mubarak +256 701 900 010",vaccineFMD:"2025-10-01",vaccineCBPP:"",vaccineLSD:"2025-11-01",vaccineND:"",vaccineGumboro:"",vaccineBrucellosis:"",dewormDate:"2025-12-01",dewormProduct:"Levamisole",dewormDose:"1ml/5kg",lastTreatDate:"",lastTreatCondition:"",lastTreatGiven:"",quarantine:"No",housing:"Confined",feedType:"Pasture + Supplement",dailyFeedPerHead:"1.5",waterSource:"Borehole",feedSupplier:"Agri-Input Ltd",breedingStatus:"Mixed",lastServiceDate:"2025-11-15",expectedCalvingDate:"2026-04-15",lastBirthDate:"2025-05-20",offspringThisSeason:"16",breedingBullID:"BUCK-001",dailyMilkYield:"",lactationNumber:"",milkingFrequency:"",weeklyEggProd:"",fcr:"",mortalityCount:"0",mortalityRate:"0",currentWeight:"42",adg:"0.15",notes:"67% of does pregnant. Expected 16 kids April 2026."},
+  ],
+  workers:[
+    {id:1,name:"James Otieno",   role:"Field Supervisor",phone:"+256 772 234 567",salary:"850000",status:"Active"},
+    {id:2,name:"Grace Nakato",   role:"Livestock Keeper", phone:"+256 703 345 678",salary:"700000",status:"Active"},
+    {id:3,name:"Peter Ssebunya", role:"Farm Hand",         phone:"+256 785 456 789",salary:"550000",status:"Active"},
+  ],
+  inventory:[
+    {id:1,item:"Maize Seed (SC403)",qty:"50", unit:"Bags", supplier:"Seedco Uganda",      date:"2025-10-15",category:"Seeds"},
+    {id:2,item:"NPK Fertilizer",    qty:"120",unit:"Bags", supplier:"Agri-Input Ltd",     date:"2025-10-20",category:"Fertilizer"},
+    {id:3,item:"Broiler Feed",      qty:"40", unit:"Bags", supplier:"Livestock Feeds UG", date:"2025-11-01",category:"Animal Feed"},
+    {id:4,item:"Sprayer Pump",      qty:"3",  unit:"Units",supplier:"Farm Tools Ltd",     date:"2025-09-10",category:"Tools"},
+  ],
+  harvest:[
+    {id:1,crop:"Maize",      harvestDate:"2026-02-15",qty:"450",unit:"Bags",location:"Store A",quality:"Grade A"},
+    {id:2,crop:"Groundnuts", harvestDate:"2026-02-20",qty:"80", unit:"Bags",location:"Store B",quality:"Grade B"},
+  ],
+  processing:[
+    {id:1,rawMaterial:"Maize",     product:"Maize Flour",    date:"2026-02-20",batch:"MF-2026-01",inputQty:"100",outputQty:"85", unit:"Bags"},
+    {id:2,rawMaterial:"Groundnuts",product:"Groundnut Paste",date:"2026-02-22",batch:"GP-2026-01",inputQty:"20", outputQty:"180",unit:"Jars"},
+  ],
+  sales:[
+    {id:1,customer:"City Market Traders",phone:"0772 111 222",product:"Maize Flour",    qty:"50", price:"120000",payment:"Paid",   date:"2026-02-25"},
+    {id:2,customer:"Green Valley Stores", phone:"0703 333 444",product:"Broiler Chicken",qty:"30", price:"85000", payment:"Pending",date:"2026-02-28"},
+    {id:3,customer:"Tali Retail Outlet",  phone:"0785 555 666",product:"Groundnut Paste",qty:"100",price:"32000", payment:"Paid",   date:"2026-03-01"},
+  ],
+  expenses:[
+    {id:1,date:"2026-01-05",type:"Seeds Purchase",  amount:"1250000",description:"SC403 Maize seed procurement"},
+    {id:2,date:"2026-01-12",type:"Fertilizer",       amount:"2400000",description:"NPK & CAN fertilizer"},
+    {id:3,date:"2026-02-01",type:"Salaries",         amount:"3200000",description:"January worker salaries"},
+    {id:4,date:"2026-02-10",type:"Equipment Repair", amount:"450000", description:"Tractor service"},
+    {id:5,date:"2026-03-01",type:"Animal Feed",      amount:"880000", description:"Broiler feed stock"},
+  ],
+};
+
+/* ══════════ ICONS ════════════════════════════════════════════ */
+const PATH = {
+  dashboard:"M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+  crops:"M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 1-8 1 9-3.9 5 7 5 7-2.8-3-6-2-9.5-.13l4.28 4.28L17 8z",
+  livestock:"M4.5 11h-2V9H1v6h1.5v-2.5h2V15H6V9H4.5v2zm2.5-.5h1.5V15H10V10.5h1.5V9H7v1.5zm5.5 0H14V15h1.5v-4.5H17V9h-4.5v1.5zm5.5-1.5v6H19v-2.5h1.5V15H22V9h-4z",
+  workers:"M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+  inventory:"M20 6h-2.18c.07-.44.18-.88.18-1.35C18 2.54 15.96.5 13.46.5 12 .5 10.72 1.15 9.85 2.12L8 4.05 6.15 2.12C5.28 1.15 4 .5 2.54.5.04.5 2 2.54 2 4.65c0 .47.09.91.18 1.35H0v15h20V6z",
+  harvest:"M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z",
+  processing:"M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+  sales:"M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
+  expenses:"M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z",
+  reports:"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
+  suppliers:"M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
+  users:"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
+  logout:"M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+  add:"M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
+  edit:"M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
+  trash:"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z",
+  warn:"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z",
+  menu:"M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
+  x:"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+  shield:"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z",
+  eye:"M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z",
+  leaf:"M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 1-8 1 9-3.9 5 7 5 7-2.8-3-6-2-9.5-.13l4.28 4.28L17 8z",
+};
+const Ico = ({ n, s = 20 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor"><path d={PATH[n] || PATH.leaf} /></svg>;
+
+/* ══════════ SHARED UI ════════════════════════════════════════ */
+const cs = { // common styles
+  input: { width:"100%",padding:"8px 11px",border:"1.5px solid #c8dfc0",borderRadius:8,fontSize:13,background:"#f8fdf6",boxSizing:"border-box",fontFamily:"inherit" },
+  btn:   { padding:"9px 18px",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit" },
+};
+const Inp = ({ sx, ...p }) => <input {...p} style={{ ...cs.input, ...sx }} />;
+const Sel = ({ children, sx, ...p }) => <select {...p} style={{ ...cs.input, ...sx }}>{children}</select>;
+const Txt = ({ sx, ...p }) => <textarea {...p} style={{ ...cs.input, minHeight:58, resize:"vertical", ...sx }} />;
+const F   = ({ label, children, span2 }) => (
+  <div style={{ marginBottom:"0.8rem", gridColumn: span2 ? "1/-1" : undefined }}>
+    <label style={{ display:"block", fontWeight:600, color:"#2d5016", marginBottom:3, fontSize:11.5 }}>{label}</label>
+    {children}
+  </div>
+);
+
+const Badge = ({ text, color="green" }) => {
+  const m = { green:["#d4edda","#155724"], yellow:["#fff3cd","#856404"], red:["#f8d7da","#721c24"], blue:["#cce5ff","#004085"], gray:["#e2e3e5","#383d41"], gold:["#fff3cd","#6d4c00"] };
+  const [bg,fg] = m[color] || m.gray;
+  return <span style={{ background:bg, color:fg, padding:"2px 9px", borderRadius:12, fontSize:11, fontWeight:600, whiteSpace:"nowrap" }}>{text}</span>;
+};
+
+const TabBar = ({ tabs, active, set }) => (
+  <div style={{ display:"flex", flexWrap:"wrap", gap:0, marginBottom:"1rem", borderBottom:"2px solid #e0eed9" }}>
+    {tabs.map(t => (
+      <button key={t.id} onClick={() => set(t.id)} style={{ padding:"7px 13px", border:"none", background:"none", cursor:"pointer", fontSize:12.5, fontWeight:active===t.id?700:500, color:active===t.id?"#2e7d32":"#888", borderBottom:active===t.id?"3px solid #2e7d32":"3px solid transparent", marginBottom:-2, whiteSpace:"nowrap" }}>
+        {t.label}
+      </button>
+    ))}
+  </div>
+);
+
+const ConfirmDel = ({ name, onOk, onNo }) => (
+  <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.62)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999 }}>
+    <div style={{ background:"#fff", borderRadius:18, padding:"2rem 1.8rem", width:350, textAlign:"center", boxShadow:"0 24px 70px rgba(0,0,0,.35)" }}>
+      <div style={{ width:58, height:58, borderRadius:"50%", background:"#ffebee", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 1rem", color:"#c62828" }}><Ico n="warn" s={28} /></div>
+      <h3 style={{ margin:"0 0 .5rem", fontFamily:"Georgia,serif" }}>Confirm Delete</h3>
+      <p style={{ color:"#666", fontSize:13, margin:"0 0 1.4rem", lineHeight:1.6 }}>Delete <strong style={{ color:"#c62828" }}>{name}</strong>?<br /><span style={{ fontSize:11.5, color:"#999" }}>This cannot be undone.</span></p>
+      <div style={{ display:"flex", gap:10 }}>
+        <button onClick={onNo}  style={{ ...cs.btn, flex:1, border:"1.5px solid #ddd", background:"#fff" }}>Cancel</button>
+        <button onClick={onOk}  style={{ ...cs.btn, flex:1, background:"linear-gradient(135deg,#c62828,#e53935)", color:"#fff" }}>Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+);
+
+const Modal = ({ title, onClose, children, accent="#2e7d32", wide }) => (
+  <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.55)", display:"flex", alignItems:"flex-start", justifyContent:"center", zIndex:1000, overflowY:"auto", padding:"16px 8px" }}>
+    <div style={{ background:"#fff", borderRadius:14, padding:"1.5rem", width:"100%", maxWidth:wide?740:520, boxShadow:"0 20px 60px rgba(0,0,0,.3)" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.1rem", paddingBottom:"0.9rem", borderBottom:`3px solid ${accent}` }}>
+        <h3 style={{ margin:0, color:"#1a3a2a", fontFamily:"Georgia,serif", fontSize:"1.05rem" }}>{title}</h3>
+        <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"#666", display:"flex" }}><Ico n="x" s={20} /></button>
+      </div>
+      {children}
+    </div>
+  </div>
+);
+
+const Grid2 = ({ children }) => <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 12px" }}>{children}</div>;
+
+/* ══════════ TABLE ════════════════════════════════════════════ */
+const Tbl = ({ cols, data, row }) => (
+  <div style={{ overflowX:"auto", borderRadius:10, border:"1.5px solid #e0eed9" }}>
+    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12.5 }}>
+      <thead>
+        <tr style={{ background:"linear-gradient(90deg,#1a3a2a,#2e5c20)" }}>
+          {cols.map(c => <th key={c} style={{ padding:"11px 12px", textAlign:"left", color:"#e8f5e9", fontWeight:700, fontSize:11, textTransform:"uppercase", letterSpacing:".5px", whiteSpace:"nowrap" }}>{c}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {!data.length
+          ? <tr><td colSpan={cols.length} style={{ textAlign:"center", padding:28, color:"#bbb" }}>No records yet</td></tr>
+          : data.map((item, i) => <tr key={item.id || i} style={{ background: i % 2 ? "#f5faf3" : "#fff" }}>{row(item)}</tr>)
+        }
+      </tbody>
+    </table>
+  </div>
+);
+const TD = ({ children, bold }) => <td style={{ padding:"9px 12px", borderBottom:"1px solid #edf4eb", fontWeight:bold?600:400, verticalAlign:"middle" }}>{children}</td>;
+
+const EditBtn = ({ onClick }) => (
+  <button onClick={onClick} style={{ background:"#e3f2fd", border:"none", borderRadius:6, padding:"4px 8px", cursor:"pointer", color:"#1565c0", display:"inline-flex", alignItems:"center", gap:3, fontSize:11, fontWeight:600, marginRight:4 }}>
+    <Ico n="edit" s={11} /> Edit
+  </button>
+);
+const DelBtn = ({ onClick, disabled }) => (
+  <button onClick={onClick} disabled={disabled} title={disabled?"Admin only":""} style={{ background:disabled?"#f5f5f5":"#ffebee", border:"none", borderRadius:6, padding:"4px 8px", cursor:disabled?"not-allowed":"pointer", color:disabled?"#ccc":"#c62828", display:"inline-flex", alignItems:"center", gap:3, fontSize:11, fontWeight:600 }}>
+    <Ico n="trash" s={11} /> Del
+  </button>
+);
+const PH = ({ icon, title, sub, onAdd, addLabel="Add New", ac="#2e7d32", canAdd=true }) => (
+  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"1.4rem", flexWrap:"wrap", gap:8 }}>
+    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+      <div style={{ width:44, height:44, borderRadius:12, background:`linear-gradient(135deg,${ac},${ac}bb)`, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", flexShrink:0 }}><Ico n={icon} s={21} /></div>
+      <div>
+        <h2 style={{ margin:0, fontFamily:"Georgia,serif", color:"#1a3a2a", fontSize:"1.3rem" }}>{title}</h2>
+        {sub && <p style={{ margin:0, color:"#6b8f5e", fontSize:12 }}>{sub}</p>}
+      </div>
+    </div>
+    {onAdd && canAdd && (
+      <button onClick={onAdd} style={{ ...cs.btn, background:`linear-gradient(135deg,${ac},${ac}bb)`, color:"#fff", display:"flex", alignItems:"center", gap:5, boxShadow:`0 4px 12px ${ac}44` }}>
+        <Ico n="add" s={16} /> {addLabel}
+      </button>
+    )}
+  </div>
+);
+
+/* ══════════ CRUD HOOK (in-memory) ════════════════════════════ */
+function useCRUD(seed) {
+  const [items, setItems] = useState(seed);
+  const [delTarget, setDelTarget] = useState(null);
+  const add    = item => setItems(p => [...p, { id: Date.now(), ...item }]);
+  const upd    = (id, patch) => setItems(p => p.map(x => x.id === id ? { ...x, ...patch } : x));
+  const askDel = (id, label) => setDelTarget({ id, label });
+  const confirmDel = () => { setItems(p => p.filter(x => x.id !== delTarget.id)); setDelTarget(null); };
+  const cancelDel  = () => setDelTarget(null);
+  return { items, add, upd, askDel, confirmDel, cancelDel, delTarget };
+}
+
+/* ══════════ LOGIN ════════════════════════════════════════════ */
+function Login({ users, onLogin }) {
+  const [u, setU] = useState(""), [p, setP] = useState(""), [err, setErr] = useState("");
+  const go = () => {
+    const acct = users.find(x => x.username === u.trim().toLowerCase() && x.active !== false);
+    if (acct && p === acct.password) onLogin(acct);
+    else setErr("Invalid username or password.");
+  };
+  const iS = { width:"100%", padding:"12px 15px", background:"rgba(255,255,255,.1)", border:"1.5px solid rgba(255,255,255,.2)", borderRadius:10, color:"#fff", fontSize:15, outline:"none", boxSizing:"border-box", fontFamily:"inherit" };
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(160deg,#0d2818,#1b4332,#2d6a4f)", padding:"1rem" }}>
+      <div style={{ background:"rgba(255,255,255,.08)", backdropFilter:"blur(20px)", border:"1px solid rgba(255,255,255,.15)", borderRadius:22, padding:"2.5rem 2rem", width:"100%", maxWidth:400, boxShadow:"0 30px 80px rgba(0,0,0,.5)" }}>
+        <div style={{ textAlign:"center", marginBottom:"1.8rem" }}>
+          <div style={{ width:76, height:76, borderRadius:20, margin:"0 auto 14px", background:"linear-gradient(135deg,#d4a017,#f5c842)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 24px rgba(212,160,23,.4)" }}><Ico n="leaf" s={38} /></div>
+          <h1 style={{ margin:0, color:"#fff", fontFamily:"Georgia,serif", fontSize:"1.5rem" }}>Tali Agro Farm</h1>
+          <p style={{ margin:"4px 0 0", color:"rgba(255,255,255,.5)", fontSize:13 }}>Farm & Processing Management System</p>
+        </div>
+        <input value={u} onChange={e=>{setU(e.target.value);setErr("");}} placeholder="Username" onKeyDown={e=>e.key==="Enter"&&go()} style={{...iS,marginBottom:10}} />
+        <input type="password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} placeholder="Password" onKeyDown={e=>e.key==="Enter"&&go()} style={{...iS,marginBottom:10}} />
+        {err && <p style={{ color:"#ff8a80", fontSize:13, textAlign:"center", margin:"0 0 8px" }}>{err}</p>}
+        <button onClick={go} style={{ ...cs.btn, width:"100%", padding:13, background:"linear-gradient(135deg,#d4a017,#e8b820)", color:"#1a1a00", fontSize:15, boxShadow:"0 6px 18px rgba(212,160,23,.4)" }}>Sign In →</button>
+        <p style={{ textAlign:"center", color:"rgba(255,255,255,.25)", fontSize:11, marginTop:12 }}>Contact your administrator for login credentials</p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ DASHBOARD ════════════════════════════════════════ */
+function Dashboard({ data }) {
+  const rev = data.sales.reduce((s,x) => s + Number(x.price||0)*Number(x.qty||1), 0);
+  const exp = data.expenses.reduce((s,x) => s + Number(x.amount||0), 0);
+  const stats = [
+    {l:"Crops",      v:data.crops.length,    ic:"crops",    c:"#2e7d32",bg:"#e8f5e9"},
+    {l:"Livestock",  v:data.livestock.length,ic:"livestock",c:"#1565c0",bg:"#e3f2fd"},
+    {l:"Workers",    v:data.workers.length,  ic:"workers",  c:"#6a1b9a",bg:"#f3e5f5"},
+    {l:"Inventory",  v:data.inventory.length,ic:"inventory",c:"#e65100",bg:"#fff3e0"},
+    {l:"Suppliers",  v:data.suppliers.length,ic:"suppliers",c:"#37474f",bg:"#eceff1"},
+    {l:"Sales",      v:data.sales.length,    ic:"sales",    c:"#c62828",bg:"#ffebee"},
+  ];
+  return (
+    <div>
+      <div style={{ marginBottom:"1.4rem" }}>
+        <h2 style={{ margin:"0 0 3px", fontFamily:"Georgia,serif", color:"#1a3a2a", fontSize:"1.55rem" }}>Farm Overview 🌤️</h2>
+        <p style={{ margin:0, color:"#6b8f5e", fontSize:12.5 }}>Tali Agro Farm & Processing Ltd · Uganda Shillings (UGX)</p>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:11, marginBottom:14 }}>
+        {stats.map(s => (
+          <div key={s.l} style={{ background:"#fff", borderRadius:12, padding:"1rem", boxShadow:"0 2px 10px rgba(0,0,0,.07)", borderLeft:`4px solid ${s.c}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+              <div><div style={{ fontSize:26, fontWeight:800, color:s.c }}>{s.v}</div><div style={{ fontSize:11.5, color:"#888", marginTop:2 }}>{s.l}</div></div>
+              <div style={{ width:34, height:34, borderRadius:9, background:s.bg, display:"flex", alignItems:"center", justifyContent:"center", color:s.c }}><Ico n={s.ic} s={17} /></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:11, marginBottom:14 }}>
+        {[{l:"Total Revenue",v:ugx(rev),c:"#2e7d32"},{l:"Total Expenses",v:ugx(exp),c:"#c62828"},{l:"Net Profit",v:ugx(rev-exp),c:rev>=exp?"#1565c0":"#c62828"}].map(x => (
+          <div key={x.l} style={{ background:"#fff", borderRadius:12, padding:"1.2rem", boxShadow:"0 2px 10px rgba(0,0,0,.07)", textAlign:"center" }}>
+            <div style={{ fontSize:17, fontWeight:800, color:x.c, marginBottom:2 }}>{x.v}</div>
+            <div style={{ fontSize:12, color:"#888" }}>{x.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background:"#fff", borderRadius:12, padding:"1.3rem", boxShadow:"0 2px 10px rgba(0,0,0,.07)" }}>
+        <h3 style={{ margin:"0 0 .9rem", fontFamily:"Georgia,serif", color:"#1a3a2a", fontSize:"1rem" }}>Recent Sales</h3>
+        <Tbl cols={["Customer","Product","Total","Status","Date"]}
+          data={[...data.sales].reverse().slice(0,5)}
+          row={s => [<TD key="c" bold>{s.customer}</TD>,<TD key="p">{s.product}</TD>,<TD key="t">{ugx(Number(s.price||0)*Number(s.qty||1))}</TD>,<TD key="st"><Badge text={s.payment} color={s.payment==="Paid"?"green":"yellow"}/></TD>,<TD key="d">{s.date}</TD>]}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ USER MANAGEMENT (Admin only) ════════════════════ */
+const BLANK_U = { username:"", password:"", role:"manager", name:"", active:true };
+function Users({ users, setUsers, canDelete }) {
+  const [modal, setModal] = useState(null);
+  const [form, setForm]   = useState(BLANK_U);
+  const [delT, setDelT]   = useState(null);
+  const isEdit = modal && modal !== "add";
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+  const save = () => {
+    if (!form.username || !form.password) return alert("Username and password required.");
+    if (!isEdit && users.find(u => u.username === form.username)) return alert("Username already exists.");
+    if (isEdit) setUsers(p => p.map(x => x.id === form.id ? form : x));
+    else setUsers(p => [...p, { id: Date.now(), ...form }]);
+    setModal(null);
+  };
+  const rl = ROLE_INFO[form.role];
+  return (
+    <div>
+      <PH icon="users" title="User Management" sub="Administrator can add, edit and manage all system users" onAdd={() => { setForm(BLANK_U); setModal("add"); }} addLabel="Add User" ac="#1a3a2a" />
+      <div style={{ background:"#fff3cd", border:"1px solid #d4a017", borderRadius:10, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#6d4c00", display:"flex", gap:8 }}>
+        <Ico n="warn" s={15} /> <span><strong>Admin only:</strong> Admins have full access. Managers can add & edit. Viewers are read-only.</span>
+      </div>
+      <Tbl cols={["Name","Username","Role","Status","Actions"]} data={users}
+        row={r => [
+          <TD key="n" bold>{r.name}</TD>,
+          <TD key="u"><code style={{ background:"#f5f5f5", padding:"2px 5px", borderRadius:4, fontSize:11 }}>{r.username}</code></TD>,
+          <TD key="r"><Badge text={ROLE_INFO[r.role]?.label||r.role} color={r.role==="admin"?"gold":r.role==="manager"?"green":"blue"}/></TD>,
+          <TD key="st"><Badge text={r.active!==false?"Active":"Inactive"} color={r.active!==false?"green":"gray"}/></TD>,
+          <TD key="a"><EditBtn onClick={() => { setForm({...r}); setModal(r); }} /><DelBtn onClick={() => setDelT({id:r.id,label:r.name})} disabled={!canDelete}/></TD>,
+        ]}
+      />
+      {delT && <ConfirmDel name={delT.label} onOk={() => { setUsers(p => p.filter(x => x.id !== delT.id)); setDelT(null); }} onNo={() => setDelT(null)} />}
+      {modal && (
+        <Modal title={isEdit ? "Edit User" : "Add System User"} onClose={() => setModal(null)} accent="#1a3a2a">
+          <Grid2>
+            <F label="Full Name" span2><Inp value={form.name} onChange={f("name")} placeholder="e.g. John Tumusiime" /></F>
+            <F label="Username (login)"><Inp value={form.username} onChange={f("username")} placeholder="e.g. john" disabled={isEdit} sx={{ background: isEdit?"#f5f5f5":"" }} /></F>
+            <F label="Password"><Inp type="password" value={form.password} onChange={f("password")} placeholder="Set password" /></F>
+            <F label="Role">
+              <Sel value={form.role} onChange={f("role")}>
+                <option value="admin">Administrator</option>
+                <option value="manager">Farm Manager</option>
+                <option value="viewer">Viewer (Read-only)</option>
+              </Sel>
+            </F>
+            <F label="Account Status">
+              <Sel value={form.active ? "true" : "false"} onChange={e => setForm(p => ({ ...p, active: e.target.value === "true" }))}>
+                <option value="true">Active</option>
+                <option value="false">Inactive (blocked)</option>
+              </Sel>
+            </F>
+          </Grid2>
+          <div style={{ background:"#e8f5e9", borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:12.5, color:"#1b5e20" }}>
+            {form.role==="admin"?"Full access — add, edit, delete and manage users.":form.role==="manager"?"Can add and edit records. Cannot delete or manage users.":"Read-only — can view all data, no changes allowed."}
+          </div>
+          <button onClick={save} style={{ ...cs.btn, width:"100%", background:"linear-gradient(135deg,#1a3a2a,#2e5c20)", color:"#fff" }}>{isEdit ? "Save Changes" : "Create User"}</button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ══════════ CROPS ════════════════════════════════════════════ */
+const BLANK_CROP = {
+  name:"Maize",variety:"",field:"",area:"",areaUnit:"acres",season:"Season A 2025/26",plantingMethod:"Direct Seeding",
+  plantDate:"",harvestDate:"",seedQty:"",seedUnit:"kg",seedLot:"",seedSupplier:"",plantPopulation:"",rowSpacing:"",
+  soilType:"Clay-Loam",lastSoilTest:"",soilPH:"",
+  basalFert:"DAP",basalQty:"",basalDate:"",topDress1:"CAN",topDress1Qty:"",topDress1Date:"",topDress2:"",topDress2Qty:"",topDress2Date:"",
+  organicManure:"",organicQty:"",organicDate:"",
+  irrigation:"Rain-fed",herbicide:"",herbicideDate:"",herbicideRate:"",insecticide:"",insecticideDate:"",insecticideRate:"",
+  fungicide:"",fungicideDate:"",fungicideRate:"",lastScouting:"",pestObserved:"",
+  status:"Seedling",cropCondition:"Good",lastInspection:"",expectedYieldPerAcre:"",totalExpectedYield:"",yieldUnit:"bags",
+  inputCost:"",expectedRevenue:"",notes:""
+};
+const CROP_NAMES=["Maize","Soyabean","Beans","Groundnuts","Vegetables","Cassava","Sweet Potato","Coffee","Sorghum","Sunflower","Other"];
+const CROP_TABS=[{id:"basic",label:"🌱 Basic & Planting"},{id:"soil",label:"🌍 Soil & Fertilizer"},{id:"protect",label:"🛡 Crop Protection"},{id:"monitor",label:"📊 Monitoring"}];
+
+function Crops({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const [modal, setModal] = useState(null);
+  const [form, setForm]   = useState(BLANK_CROP);
+  const [tab, setTab]     = useState("basic");
+  const isEdit = modal && modal !== "add";
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+  const open = (r) => { setForm(r ? { ...r } : BLANK_CROP); setTab("basic"); setModal(r || "add"); };
+  const save = () => { isEdit ? upd(form.id, form) : add(form); setModal(null); };
+  const tabIdx = CROP_TABS.findIndex(t => t.id === tab);
+
+  return (
+    <div>
+      <PH icon="crops" title="Crop Management" sub={`${items.length} records · Full agronomic detail`} onAdd={() => open(null)} addLabel="Add Crop" canAdd={canEdit} />
+      <Tbl cols={["Crop","Variety","Field","Area","Stage","Condition","Est. Yield","P&L","Actions"]} data={items}
+        row={r => [
+          <TD key="n" bold>{r.name}</TD>,
+          <TD key="v">{r.variety||"—"}</TD>,
+          <TD key="f">{r.field||"—"}</TD>,
+          <TD key="a">{r.area ? `${r.area} ${r.areaUnit}` : "—"}</TD>,
+          <TD key="s"><Badge text={r.status} color={r.status==="Harvested"?"blue":r.status==="Failed"?"red":r.status==="Seedling"?"yellow":"green"}/></TD>,
+          <TD key="c"><Badge text={r.cropCondition||"—"} color={r.cropCondition==="Excellent"||r.cropCondition==="Good"?"green":r.cropCondition==="Fair"?"yellow":"red"}/></TD>,
+          <TD key="y">{r.totalExpectedYield ? `${r.totalExpectedYield} ${r.yieldUnit}` : "—"}</TD>,
+          <TD key="pl">{r.inputCost && r.expectedRevenue ? <span style={{color:Number(r.expectedRevenue)>=Number(r.inputCost)?"#1b5e20":"#c62828",fontWeight:600}}>{ugx(Number(r.expectedRevenue)-Number(r.inputCost))}</span> : "—"}</TD>,
+          <TD key="a">{canEdit&&<EditBtn onClick={() => open(r)} />}<DelBtn onClick={() => askDel(r.id, r.name)} disabled={!canDelete} /></TD>,
+        ]}
+      />
+      {delTarget && <ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel} />}
+      {modal && (
+        <Modal title={isEdit ? `Edit — ${form.name}` : "Add Crop Record"} onClose={() => setModal(null)} wide>
+          <TabBar tabs={CROP_TABS} active={tab} set={setTab} />
+          {tab === "basic" && (
+            <Grid2>
+              <F label="Crop Type"><Sel value={form.name} onChange={f("name")}>{CROP_NAMES.map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Variety / Cultivar"><Inp value={form.variety} onChange={f("variety")} placeholder="e.g. SC403"/></F>
+              <F label="Field / Block"><Inp value={form.field} onChange={f("field")} placeholder="e.g. Block A"/></F>
+              <F label="Season"><Sel value={form.season} onChange={f("season")}>{["Season A 2025/26","Season B 2025/26","Season A 2026/27","Season B 2026/27","Irrigated Year-Round"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Area (size)"><div style={{display:"flex",gap:6}}><Inp value={form.area} onChange={f("area")} type="number" sx={{flex:1}} placeholder="e.g. 1.5"/><Sel value={form.areaUnit} onChange={f("areaUnit")} sx={{width:100}}><option>acres</option><option>hectares</option></Sel></div></F>
+              <F label="Planting Method"><Sel value={form.plantingMethod} onChange={f("plantingMethod")}>{["Direct Seeding","Transplanting","Ratoon Crop","Ridging & Planting"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Planting Date"><Inp type="date" value={form.plantDate} onChange={f("plantDate")}/></F>
+              <F label="Expected Harvest Date"><Inp type="date" value={form.harvestDate} onChange={f("harvestDate")}/></F>
+              <F label="Seed Quantity"><div style={{display:"flex",gap:6}}><Inp value={form.seedQty} onChange={f("seedQty")} type="number" sx={{flex:1}}/><Sel value={form.seedUnit} onChange={f("seedUnit")} sx={{width:80}}><option>kg</option><option>bags</option><option>g</option></Sel></div></F>
+              <F label="Seed Lot Number"><Inp value={form.seedLot} onChange={f("seedLot")} placeholder="e.g. SL-2025-001"/></F>
+              <F label="Seed Supplier"><Inp value={form.seedSupplier} onChange={f("seedSupplier")} placeholder="Supplier name"/></F>
+              <F label="Plant Population (plants/acre)"><Inp type="number" value={form.plantPopulation} onChange={f("plantPopulation")} placeholder="e.g. 35000"/></F>
+              <F label="Row Spacing (cm)"><Inp type="number" value={form.rowSpacing} onChange={f("rowSpacing")} placeholder="e.g. 75"/></F>
+            </Grid2>
+          )}
+          {tab === "soil" && (
+            <Grid2>
+              <F label="Soil Type"><Sel value={form.soilType} onChange={f("soilType")}>{["Clay","Sandy","Loam","Clay-Loam","Sandy-Loam","Silty","Volcanic"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Soil pH Level"><Inp value={form.soilPH} onChange={f("soilPH")} placeholder="e.g. 6.2"/></F>
+              <F label="Last Soil Test Date"><Inp type="date" value={form.lastSoilTest} onChange={f("lastSoilTest")}/></F>
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Fertilizer Programme</span></div>
+              <F label="Basal Fertilizer"><Inp value={form.basalFert} onChange={f("basalFert")} placeholder="e.g. DAP"/></F>
+              <F label="Basal Qty (kg/acre)"><Inp type="number" value={form.basalQty} onChange={f("basalQty")}/></F>
+              <F label="Basal Date"><Inp type="date" value={form.basalDate} onChange={f("basalDate")}/></F>
+              <F label="1st Top-dress"><Inp value={form.topDress1} onChange={f("topDress1")} placeholder="e.g. CAN"/></F>
+              <F label="1st Qty (kg/acre)"><Inp type="number" value={form.topDress1Qty} onChange={f("topDress1Qty")}/></F>
+              <F label="1st Top-dress Date"><Inp type="date" value={form.topDress1Date} onChange={f("topDress1Date")}/></F>
+              <F label="2nd Top-dress"><Inp value={form.topDress2} onChange={f("topDress2")} placeholder="e.g. Urea"/></F>
+              <F label="2nd Qty (kg/acre)"><Inp type="number" value={form.topDress2Qty} onChange={f("topDress2Qty")}/></F>
+              <F label="2nd Top-dress Date"><Inp type="date" value={form.topDress2Date} onChange={f("topDress2Date")}/></F>
+              <F label="Organic Manure / Amendment"><Inp value={form.organicManure} onChange={f("organicManure")} placeholder="e.g. Farmyard Manure"/></F>
+              <F label="Organic Qty (tonnes)"><Inp type="number" value={form.organicQty} onChange={f("organicQty")}/></F>
+              <F label="Organic Application Date"><Inp type="date" value={form.organicDate} onChange={f("organicDate")}/></F>
+            </Grid2>
+          )}
+          {tab === "protect" && (
+            <Grid2>
+              <F label="Irrigation Method"><Sel value={form.irrigation} onChange={f("irrigation")}>{["Rain-fed","Drip Irrigation","Furrow Irrigation","Sprinkler","Centre Pivot","None"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Last Field Scouting Date"><Inp type="date" value={form.lastScouting} onChange={f("lastScouting")}/></F>
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Weed Management</span></div>
+              <F label="Herbicide"><Inp value={form.herbicide} onChange={f("herbicide")} placeholder="e.g. Primextra Gold"/></F>
+              <F label="Herbicide Date"><Inp type="date" value={form.herbicideDate} onChange={f("herbicideDate")}/></F>
+              <F label="Herbicide Rate (L/ha)"><Inp value={form.herbicideRate} onChange={f("herbicideRate")} placeholder="e.g. 3L/ha"/></F>
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Pest Management</span></div>
+              <F label="Insecticide"><Inp value={form.insecticide} onChange={f("insecticide")} placeholder="e.g. Lambda-cyhalothrin"/></F>
+              <F label="Insecticide Date"><Inp type="date" value={form.insecticideDate} onChange={f("insecticideDate")}/></F>
+              <F label="Insecticide Rate"><Inp value={form.insecticideRate} onChange={f("insecticideRate")} placeholder="e.g. 0.5L/ha"/></F>
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Disease Management</span></div>
+              <F label="Fungicide"><Inp value={form.fungicide} onChange={f("fungicide")} placeholder="e.g. Mancozeb"/></F>
+              <F label="Fungicide Date"><Inp type="date" value={form.fungicideDate} onChange={f("fungicideDate")}/></F>
+              <F label="Fungicide Rate"><Inp value={form.fungicideRate} onChange={f("fungicideRate")} placeholder="e.g. 2.5kg/ha"/></F>
+              <F label="Pests / Diseases Observed" span2><Txt value={form.pestObserved} onChange={f("pestObserved")} placeholder="Describe any observed issues"/></F>
+            </Grid2>
+          )}
+          {tab === "monitor" && (
+            <Grid2>
+              <F label="Current Growth Stage"><Sel value={form.status} onChange={f("status")}>{["Seedling","Vegetative","Flowering","Grain Fill","Maturity","Harvested","Failed"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Crop Condition"><Sel value={form.cropCondition} onChange={f("cropCondition")}>{["Excellent","Good","Fair","Poor","Critical"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Last Inspection Date"><Inp type="date" value={form.lastInspection} onChange={f("lastInspection")}/></F>
+              <F label="Yield per Acre"><Inp type="number" value={form.expectedYieldPerAcre} onChange={f("expectedYieldPerAcre")} placeholder="e.g. 30"/></F>
+              <F label="Total Expected Yield"><div style={{display:"flex",gap:6}}><Inp type="number" value={form.totalExpectedYield} onChange={f("totalExpectedYield")} sx={{flex:1}}/><Sel value={form.yieldUnit} onChange={f("yieldUnit")} sx={{width:90}}><option>bags</option><option>kg</option><option>tonnes</option><option>crates</option></Sel></div></F>
+              <F label="Total Input Cost (UGX)"><Inp type="number" value={form.inputCost} onChange={f("inputCost")}/></F>
+              <F label="Expected Revenue (UGX)"><Inp type="number" value={form.expectedRevenue} onChange={f("expectedRevenue")}/></F>
+              {form.inputCost && form.expectedRevenue && (
+                <F label="Projected Profit / ROI" span2>
+                  <div style={{ padding:"9px 12px", background:Number(form.expectedRevenue)>=Number(form.inputCost)?"#e8f5e9":"#ffebee", borderRadius:8, fontWeight:700, color:Number(form.expectedRevenue)>=Number(form.inputCost)?"#1b5e20":"#c62828", fontSize:13 }}>
+                    {ugx(Number(form.expectedRevenue)-Number(form.inputCost))} &nbsp;·&nbsp; ROI: {((Number(form.expectedRevenue)/Number(form.inputCost)-1)*100).toFixed(1)}%
+                  </div>
+                </F>
+              )}
+              <F label="Agronomist Notes" span2><Txt value={form.notes} onChange={f("notes")} placeholder="Observations, recommendations, issues..."/></F>
+            </Grid2>
+          )}
+          <div style={{ display:"flex", gap:10, marginTop:12, borderTop:"1px solid #e0eed9", paddingTop:12 }}>
+            {tabIdx > 0 && <button onClick={() => setTab(CROP_TABS[tabIdx-1].id)} style={{ ...cs.btn, border:"1.5px solid #c8dfc0", background:"#fff", color:"#2e7d32" }}>← Back</button>}
+            {tabIdx < CROP_TABS.length-1
+              ? <button onClick={() => setTab(CROP_TABS[tabIdx+1].id)} style={{ ...cs.btn, flex:1, background:"linear-gradient(135deg,#2e7d32,#43a047)", color:"#fff" }}>Next →</button>
+              : <button onClick={save} style={{ ...cs.btn, flex:1, background:"linear-gradient(135deg,#2e7d32,#43a047)", color:"#fff" }}>{isEdit?"Save Changes":"Save Crop"}</button>
+            }
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ══════════ LIVESTOCK ════════════════════════════════════════ */
+const BLANK_LIVE = {
+  species:"Cattle",breed:"",tag:"",sex:"Female",count:"",ageGroup:"Adult",dob:"",acquired:"",source:"Born on Farm",purchaseCost:"",currentValuePerHead:"",
+  health:"Healthy",bodyConditionScore:"3",lastVetVisit:"",vetContact:"",
+  vaccineFMD:"",vaccineCBPP:"",vaccineLSD:"",vaccineND:"",vaccineGumboro:"",vaccineBrucellosis:"",
+  dewormDate:"",dewormProduct:"",dewormDose:"",lastTreatDate:"",lastTreatCondition:"",lastTreatGiven:"",quarantine:"No",
+  housing:"Semi-confined",feedType:"Pasture + Concentrates",dailyFeedPerHead:"",waterSource:"Borehole",feedSupplier:"",
+  breedingStatus:"Open",lastServiceDate:"",expectedCalvingDate:"",lastBirthDate:"",offspringThisSeason:"",breedingBullID:"",
+  dailyMilkYield:"",lactationNumber:"",milkingFrequency:"2x daily",weeklyEggProd:"",fcr:"",mortalityCount:"",mortalityRate:"",
+  currentWeight:"",adg:"",notes:""
+};
+const LIVE_TABS=[{id:"id",label:"🐄 Identity"},{id:"health",label:"💉 Health & Vaccines"},{id:"feed",label:"🌿 Feeding"},{id:"breed",label:"🐣 Reproduction"},{id:"prod",label:"📈 Production"}];
+const SPECIES=["Cattle","Goat","Sheep","Poultry","Pig","Rabbit","Duck","Turkey","Other"];
+
+function Livestock({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const [modal, setModal] = useState(null);
+  const [form, setForm]   = useState(BLANK_LIVE);
+  const [tab, setTab]     = useState("id");
+  const isEdit = modal && modal !== "add";
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+  const open = (r) => { setForm(r ? { ...r } : BLANK_LIVE); setTab("id"); setModal(r || "add"); };
+  const save = () => { isEdit ? upd(form.id, form) : add(form); setModal(null); };
+  const tabIdx = LIVE_TABS.findIndex(t => t.id === tab);
+  const isPoultry = form.species==="Poultry"||form.species==="Duck"||form.species==="Turkey";
+  const isCattle  = form.species==="Cattle";
+
+  return (
+    <div>
+      <PH icon="livestock" title="Livestock Management" sub={`${items.length} groups · ${items.reduce((s,l)=>s+Number(l.count||0),0)} total animals`} onAdd={() => open(null)} addLabel="Add Animals" ac="#1565c0" canAdd={canEdit} />
+      <Tbl cols={["Species","Breed","Tag / ID","Count","Sex","Health","BCS","Value/Hd","Actions"]} data={items}
+        row={r => [
+          <TD key="sp" bold>{r.species}</TD>,
+          <TD key="b">{r.breed}</TD>,
+          <TD key="t">{r.tag}</TD>,
+          <TD key="c">{r.count}</TD>,
+          <TD key="sx">{r.sex}</TD>,
+          <TD key="h"><Badge text={r.health} color={r.health==="Healthy"?"green":r.health==="Sick"?"red":"yellow"}/></TD>,
+          <TD key="bcs">{r.bodyConditionScore||"—"}</TD>,
+          <TD key="v">{r.currentValuePerHead ? ugx(r.currentValuePerHead) : "—"}</TD>,
+          <TD key="a">{canEdit&&<EditBtn onClick={() => open(r)} />}<DelBtn onClick={() => askDel(r.id, `${r.species} — ${r.tag}`)} disabled={!canDelete} /></TD>,
+        ]}
+      />
+      {delTarget && <ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel} />}
+      {modal && (
+        <Modal title={isEdit ? `Edit — ${form.species} ${form.tag}` : "Add Livestock Record"} onClose={() => setModal(null)} wide>
+          <TabBar tabs={LIVE_TABS} active={tab} set={setTab} />
+          {tab === "id" && (
+            <Grid2>
+              <F label="Species"><Sel value={form.species} onChange={f("species")}>{SPECIES.map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Breed"><Inp value={form.breed} onChange={f("breed")} placeholder="e.g. Friesian, Boer, Ross 308"/></F>
+              <F label="Tag / Flock ID"><Inp value={form.tag} onChange={f("tag")} placeholder="e.g. COW-001"/></F>
+              <F label="Sex"><Sel value={form.sex} onChange={f("sex")}><option>Female</option><option>Male</option><option>Mixed Flock</option><option>Castrated</option></Sel></F>
+              <F label="Number of Animals"><Inp type="number" value={form.count} onChange={f("count")}/></F>
+              <F label="Age Group"><Sel value={form.ageGroup} onChange={f("ageGroup")}>{["Neonate (0-1 week)","Calf/Chick/Kid (1wk-3mo)","Weaner (3-6 months)","Grower (6-12 months)","Young Adult (1-2 years)","Adult (2+ years)","Senior","Mixed"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Date of Birth / Hatch Date"><Inp type="date" value={form.dob} onChange={f("dob")}/></F>
+              <F label="Date Acquired / Placed"><Inp type="date" value={form.acquired} onChange={f("acquired")}/></F>
+              <F label="Source"><Sel value={form.source} onChange={f("source")}>{["Born on Farm","Local Market","Other Farm","Hatchery","Auction","Imported"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Purchase Cost (UGX total)"><Inp type="number" value={form.purchaseCost} onChange={f("purchaseCost")}/></F>
+              <F label="Current Value per Head (UGX)"><Inp type="number" value={form.currentValuePerHead} onChange={f("currentValuePerHead")}/></F>
+              <F label="Live Weight (kg avg)"><Inp type="number" value={form.currentWeight} onChange={f("currentWeight")}/></F>
+              <F label="Avg Daily Gain (kg/day)"><Inp type="number" value={form.adg} onChange={f("adg")} placeholder="e.g. 0.8"/></F>
+              <F label="Quarantine Status"><Sel value={form.quarantine} onChange={f("quarantine")}><option>No</option><option>Yes — In quarantine</option><option>Cleared</option></Sel></F>
+            </Grid2>
+          )}
+          {tab === "health" && (
+            <Grid2>
+              <F label="Health Status"><Sel value={form.health} onChange={f("health")}>{["Healthy","Sick","Under Treatment","Recovering","Quarantined"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Body Condition Score (1–5)"><Sel value={form.bodyConditionScore} onChange={f("bodyConditionScore")}>{["1 — Emaciated","1.5","2 — Thin","2.5","3 — Moderate","3.5","4 — Good","4.5","5 — Obese"].map(x=><option key={x} value={x.split(" ")[0]}>{x}</option>)}</Sel></F>
+              <F label="Last Vet Visit"><Inp type="date" value={form.lastVetVisit} onChange={f("lastVetVisit")}/></F>
+              <F label="Vet Contact"><Inp value={form.vetContact} onChange={f("vetContact")} placeholder="Name and phone"/></F>
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Vaccination Dates</span></div>
+              {!isPoultry&&<>
+                <F label="FMD Vaccine Date"><Inp type="date" value={form.vaccineFMD} onChange={f("vaccineFMD")}/></F>
+                <F label="CBPP Vaccine Date"><Inp type="date" value={form.vaccineCBPP} onChange={f("vaccineCBPP")}/></F>
+                <F label="LSD Vaccine Date"><Inp type="date" value={form.vaccineLSD} onChange={f("vaccineLSD")}/></F>
+                <F label="Brucellosis Vaccine"><Inp type="date" value={form.vaccineBrucellosis} onChange={f("vaccineBrucellosis")}/></F>
+              </>}
+              {isPoultry&&<>
+                <F label="Newcastle Disease (ND)"><Inp type="date" value={form.vaccineND} onChange={f("vaccineND")}/></F>
+                <F label="Gumboro (IBD) Date"><Inp type="date" value={form.vaccineGumboro} onChange={f("vaccineGumboro")}/></F>
+              </>}
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>Deworming & Treatment</span></div>
+              <F label="Last Deworming Date"><Inp type="date" value={form.dewormDate} onChange={f("dewormDate")}/></F>
+              <F label="Deworming Product"><Inp value={form.dewormProduct} onChange={f("dewormProduct")} placeholder="e.g. Albendazole"/></F>
+              <F label="Dose / Rate"><Inp value={form.dewormDose} onChange={f("dewormDose")} placeholder="e.g. 10ml/head"/></F>
+              <F label="Last Treatment Date"><Inp type="date" value={form.lastTreatDate} onChange={f("lastTreatDate")}/></F>
+              <F label="Condition Treated"><Inp value={form.lastTreatCondition} onChange={f("lastTreatCondition")} placeholder="e.g. Mastitis"/></F>
+              <F label="Treatment Given" span2><Txt value={form.lastTreatGiven} onChange={f("lastTreatGiven")} placeholder="Drug, dose, duration"/></F>
+            </Grid2>
+          )}
+          {tab === "feed" && (
+            <Grid2>
+              <F label="Housing System"><Sel value={form.housing} onChange={f("housing")}>{["Free-range","Confined (Zero-grazing)","Semi-confined","Paddock Grazing","Rotational Grazing","Deep Litter","Cage System"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Feed Type / Programme"><Sel value={form.feedType} onChange={f("feedType")}>{["Pasture Only","Concentrates Only","Pasture + Concentrates","Total Mixed Ration (TMR)","Broiler Starter","Broiler Finisher","Layer Mash","Dairy Meal","Pig Grower","Custom Mix"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Daily Feed per Head (kg)"><Inp type="number" value={form.dailyFeedPerHead} onChange={f("dailyFeedPerHead")} placeholder="kg per animal per day"/></F>
+              <F label="Water Source"><Sel value={form.waterSource} onChange={f("waterSource")}>{["Borehole","River / Stream","Rain Catchment","Dam / Pond","Piped Water","Water Bowser"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Feed Supplier" span2><Inp value={form.feedSupplier} onChange={f("feedSupplier")}/></F>
+              {form.count && form.dailyFeedPerHead && (
+                <F label="Total Daily Feed Required" span2>
+                  <div style={{ padding:"9px 12px", background:"#e3f2fd", borderRadius:8, fontWeight:700, color:"#1565c0", fontSize:13 }}>
+                    {(Number(form.count)*Number(form.dailyFeedPerHead)).toFixed(1)} kg/day &nbsp;·&nbsp; {(Number(form.count)*Number(form.dailyFeedPerHead)*30).toFixed(0)} kg/month
+                  </div>
+                </F>
+              )}
+            </Grid2>
+          )}
+          {tab === "breed" && (
+            <Grid2>
+              <F label="Breeding Status"><Sel value={form.breedingStatus} onChange={f("breedingStatus")}>{["Open","Pregnant","Lactating","Dry","Growing (pre-breeding)","N/A","Mixed Flock"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+              <F label="Sire / Bull / Buck ID"><Inp value={form.breedingBullID} onChange={f("breedingBullID")} placeholder="Sire ID"/></F>
+              <F label="Last Service / AI Date"><Inp type="date" value={form.lastServiceDate} onChange={f("lastServiceDate")}/></F>
+              <F label="Expected Calving / Kidding Date"><Inp type="date" value={form.expectedCalvingDate} onChange={f("expectedCalvingDate")}/></F>
+              <F label="Last Birth / Hatch Date"><Inp type="date" value={form.lastBirthDate} onChange={f("lastBirthDate")}/></F>
+              <F label="Offspring Born This Season"><Inp type="number" value={form.offspringThisSeason} onChange={f("offspringThisSeason")}/></F>
+            </Grid2>
+          )}
+          {tab === "prod" && (
+            <Grid2>
+              {isCattle && <>
+                <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"0 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase"}}>Dairy Production</span></div>
+                <F label="Daily Milk Yield (L/cow)"><Inp type="number" value={form.dailyMilkYield} onChange={f("dailyMilkYield")} placeholder="e.g. 18"/></F>
+                <F label="Lactation Number"><Inp type="number" value={form.lactationNumber} onChange={f("lactationNumber")} placeholder="e.g. 3"/></F>
+                <F label="Milking Frequency"><Sel value={form.milkingFrequency} onChange={f("milkingFrequency")}><option>2x daily</option><option>3x daily</option><option>Once daily</option><option>Not milking</option></Sel></F>
+                {form.count && form.dailyMilkYield && (
+                  <F label="Herd Total Daily Production">
+                    <div style={{ padding:"9px 12px", background:"#e8f5e9", borderRadius:8, fontWeight:700, color:"#1b5e20", fontSize:13 }}>
+                      {(Number(form.count)*Number(form.dailyMilkYield)).toFixed(0)} L/day &nbsp;·&nbsp; {(Number(form.count)*Number(form.dailyMilkYield)*30).toFixed(0)} L/month
+                    </div>
+                  </F>
+                )}
+              </>}
+              {isPoultry && <>
+                <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"0 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase"}}>Poultry Production</span></div>
+                <F label="Weekly Egg Production (layers)"><Inp type="number" value={form.weeklyEggProd} onChange={f("weeklyEggProd")}/></F>
+                <F label="Feed Conversion Ratio (FCR)"><Inp type="number" value={form.fcr} onChange={f("fcr")} placeholder="e.g. 1.8"/></F>
+                <F label="Mortality Count (this batch)"><Inp type="number" value={form.mortalityCount} onChange={f("mortalityCount")}/></F>
+                <F label="Mortality Rate (%)"><Inp type="number" value={form.mortalityRate} onChange={f("mortalityRate")}/></F>
+              </>}
+              <div style={{gridColumn:"1/-1",borderBottom:"1px solid #e0eed9",margin:"4px 0 8px"}}><span style={{fontSize:11,color:"#2e7d32",fontWeight:700,textTransform:"uppercase"}}>Weight & Growth</span></div>
+              <F label="Live Weight (kg avg)"><Inp type="number" value={form.currentWeight} onChange={f("currentWeight")}/></F>
+              <F label="Avg Daily Gain (kg/day)"><Inp type="number" value={form.adg} onChange={f("adg")} placeholder="e.g. 0.8"/></F>
+              <F label="Notes / Observations" span2><Txt value={form.notes} onChange={f("notes")} placeholder="Production notes, targets..."/></F>
+            </Grid2>
+          )}
+          <div style={{ display:"flex", gap:10, marginTop:12, borderTop:"1px solid #e0eed9", paddingTop:12 }}>
+            {tabIdx > 0 && <button onClick={() => setTab(LIVE_TABS[tabIdx-1].id)} style={{ ...cs.btn, border:"1.5px solid #c8dfc0", background:"#fff", color:"#1565c0" }}>← Back</button>}
+            {tabIdx < LIVE_TABS.length-1
+              ? <button onClick={() => setTab(LIVE_TABS[tabIdx+1].id)} style={{ ...cs.btn, flex:1, background:"linear-gradient(135deg,#1565c0,#1976d2)", color:"#fff" }}>Next →</button>
+              : <button onClick={save} style={{ ...cs.btn, flex:1, background:"linear-gradient(135deg,#1565c0,#1976d2)", color:"#fff" }}>{isEdit?"Save Changes":"Save Livestock"}</button>
+            }
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ══════════ SIMPLE CRUD MODULES ═════════════════════════════ */
+function Suppliers({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const [modal, setModal] = useState(null);
+  const BK = {name:"",category:"Seeds",contact:"",phone:"",email:"",status:"Active"};
+  const [form, setForm] = useState(BK);
+  const isEdit = modal && modal !== "add";
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+  const save = () => { isEdit ? upd(form.id, form) : add(form); setModal(null); };
+  return (
+    <div>
+      <PH icon="suppliers" title="Suppliers" sub={`${items.length} registered`} onAdd={() => { setForm(BK); setModal("add"); }} addLabel="Add Supplier" ac="#37474f" canAdd={canEdit} />
+      <Tbl cols={["Supplier","Category","Contact","Phone","Email","Status","Actions"]} data={items}
+        row={r => [<TD key="n" bold>{r.name}</TD>,<TD key="c"><Badge text={r.category} color="blue"/></TD>,<TD key="cp">{r.contact}</TD>,<TD key="ph">{r.phone}</TD>,<TD key="em" style={{fontSize:11.5}}>{r.email}</TD>,<TD key="st"><Badge text={r.status} color={r.status==="Active"?"green":"gray"}/></TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.name)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget && <ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel} />}
+      {modal && <Modal title={isEdit?"Edit Supplier":"Add Supplier"} onClose={()=>setModal(null)} accent="#37474f">
+        <Grid2>
+          <F label="Supplier Name" span2><Inp value={form.name} onChange={f("name")}/></F>
+          <F label="Category"><Sel value={form.category} onChange={f("category")}>{["Seeds","Fertilizer","Animal Feed","Tools","Veterinary","Chemicals","Transport","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Status"><Sel value={form.status} onChange={f("status")}>{["Active","Inactive","On Hold"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Contact Person"><Inp value={form.contact} onChange={f("contact")}/></F>
+          <F label="Phone"><Inp value={form.phone} onChange={f("phone")}/></F>
+          <F label="Email" span2><Inp type="email" value={form.email} onChange={f("email")}/></F>
+        </Grid2>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#37474f,#546e7a)",color:"#fff"}}>{isEdit?"Save Changes":"Add Supplier"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Workers({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={name:"",role:"",phone:"",salary:"",status:"Active"};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  return (
+    <div>
+      <PH icon="workers" title="Workers" sub={`${items.length} staff · Payroll: ${ugx(items.reduce((s,w)=>s+Number(w.salary||0),0))}/mo`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Worker" ac="#6a1b9a" canAdd={canEdit}/>
+      <Tbl cols={["Name","Role","Phone","Salary (UGX/mo)","Status","Actions"]} data={items}
+        row={r=>[<TD key="n" bold>{r.name}</TD>,<TD key="r">{r.role}</TD>,<TD key="p">{r.phone}</TD>,<TD key="s">{ugx(r.salary)}</TD>,<TD key="st"><Badge text={r.status} color={r.status==="Active"?"green":"gray"}/></TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.name)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Worker":"Add Worker"} onClose={()=>setModal(null)} accent="#6a1b9a">
+        <Grid2>
+          <F label="Full Name" span2><Inp value={form.name} onChange={f("name")}/></F>
+          <F label="Role / Position"><Inp value={form.role} onChange={f("role")} placeholder="e.g. Field Supervisor"/></F>
+          <F label="Phone"><Inp value={form.phone} onChange={f("phone")}/></F>
+          <F label="Monthly Salary (UGX)"><Inp type="number" value={form.salary} onChange={f("salary")}/></F>
+          <F label="Status"><Sel value={form.status} onChange={f("status")}>{["Active","On Leave","Inactive"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+        </Grid2>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#6a1b9a,#7b1fa2)",color:"#fff"}}>{isEdit?"Save Changes":"Add Worker"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Inventory({ crud, canDelete, canEdit, suppliers }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={item:"",qty:"",unit:"Bags",supplier:"",date:"",category:"Seeds"};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  return (
+    <div>
+      <PH icon="inventory" title="Inventory" sub="Seeds · Fertilizers · Feeds · Tools" onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Item" ac="#e65100" canAdd={canEdit}/>
+      <Tbl cols={["Item","Category","Qty","Supplier","Date","Actions"]} data={items}
+        row={r=>[<TD key="i" bold>{r.item}</TD>,<TD key="c"><Badge text={r.category} color="blue"/></TD>,<TD key="q">{r.qty} {r.unit}</TD>,<TD key="s">{r.supplier||"—"}</TD>,<TD key="d">{r.date}</TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.item)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Item":"Add Item"} onClose={()=>setModal(null)} accent="#e65100">
+        <F label="Item Name"><Inp value={form.item} onChange={f("item")}/></F>
+        <Grid2>
+          <F label="Category"><Sel value={form.category} onChange={f("category")}>{["Seeds","Fertilizer","Animal Feed","Tools","Pesticides","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Supplier"><Sel value={form.supplier} onChange={f("supplier")}><option value="">— Select —</option>{suppliers.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}</Sel></F>
+          <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
+          <F label="Unit"><Inp value={form.unit} onChange={f("unit")}/></F>
+        </Grid2>
+        <F label="Date Received"><Inp type="date" value={form.date} onChange={f("date")}/></F>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff"}}>{isEdit?"Save Changes":"Add Item"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Harvest({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={crop:"Maize",harvestDate:"",qty:"",unit:"Bags",location:"Store A",quality:"Grade A"};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  return (
+    <div>
+      <PH icon="harvest" title="Harvest" sub={`Total: ${items.reduce((s,h)=>s+Number(h.qty||0),0)} units`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Record Harvest" ac="#00695c" canAdd={canEdit}/>
+      <Tbl cols={["Crop","Date","Quantity","Storage","Quality","Actions"]} data={items}
+        row={r=>[<TD key="c" bold>{r.crop}</TD>,<TD key="d">{r.harvestDate}</TD>,<TD key="q">{r.qty} {r.unit}</TD>,<TD key="l">{r.location}</TD>,<TD key="ql"><Badge text={r.quality} color={r.quality==="Grade A"?"green":r.quality==="Grade B"?"yellow":"gray"}/></TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,`${r.crop} harvest`)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Harvest":"Record Harvest"} onClose={()=>setModal(null)} accent="#00695c">
+        <Grid2>
+          <F label="Crop"><Sel value={form.crop} onChange={f("crop")}>{["Maize","Soyabean","Beans","Groundnuts","Vegetables","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Harvest Date"><Inp type="date" value={form.harvestDate} onChange={f("harvestDate")}/></F>
+          <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
+          <F label="Unit"><Inp value={form.unit} onChange={f("unit")}/></F>
+          <F label="Storage Location"><Inp value={form.location} onChange={f("location")}/></F>
+          <F label="Quality Grade"><Sel value={form.quality} onChange={f("quality")}>{["Grade A","Grade B","Grade C","Rejected"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+        </Grid2>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#00695c,#00897b)",color:"#fff"}}>{isEdit?"Save Changes":"Save"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Processing({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={rawMaterial:"Maize",product:"",date:"",batch:"",inputQty:"",outputQty:"",unit:"Bags"};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  return (
+    <div>
+      <PH icon="processing" title="Processing Unit" sub="Raw material → finished product" onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Batch" ac="#37474f" canAdd={canEdit}/>
+      <Tbl cols={["Material","Product","Batch","Input","Output","Date","Actions"]} data={items}
+        row={r=>[<TD key="rm" bold>{r.rawMaterial}</TD>,<TD key="p">{r.product}</TD>,<TD key="b">{r.batch}</TD>,<TD key="iq">{r.inputQty} {r.unit}</TD>,<TD key="oq">{r.outputQty} {r.unit}</TD>,<TD key="d">{r.date}</TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.batch||r.product)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Batch":"Add Batch"} onClose={()=>setModal(null)} accent="#37474f">
+        <Grid2>
+          <F label="Raw Material"><Sel value={form.rawMaterial} onChange={f("rawMaterial")}>{["Maize","Groundnuts","Soyabean","Beans","Milk","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Finished Product"><Inp value={form.product} onChange={f("product")} placeholder="e.g. Maize Flour"/></F>
+          <F label="Batch Number"><Inp value={form.batch} onChange={f("batch")} placeholder="MF-2026-01"/></F>
+          <F label="Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
+          <F label="Input Qty"><Inp type="number" value={form.inputQty} onChange={f("inputQty")}/></F>
+          <F label="Output Qty"><Inp type="number" value={form.outputQty} onChange={f("outputQty")}/></F>
+          <F label="Unit"><Inp value={form.unit} onChange={f("unit")}/></F>
+        </Grid2>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#37474f,#546e7a)",color:"#fff"}}>{isEdit?"Save Changes":"Save"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Sales({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={customer:"",phone:"",product:"",qty:"",price:"",payment:"Paid",date:""};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  const totalRev=items.reduce((s,x)=>s+Number(x.price||0)*Number(x.qty||1),0);
+  return (
+    <div>
+      <PH icon="sales" title="Sales & Customers" sub={`${items.length} transactions · ${ugx(totalRev)}`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="New Sale" ac="#c62828" canAdd={canEdit}/>
+      <Tbl cols={["Customer","Product","Qty","Unit Price","Total","Status","Date","Actions"]} data={items}
+        row={r=>[<TD key="c" bold>{r.customer}</TD>,<TD key="p">{r.product}</TD>,<TD key="q">{r.qty}</TD>,<TD key="up">{ugx(r.price)}</TD>,<TD key="t" bold>{ugx(Number(r.price||0)*Number(r.qty||1))}</TD>,<TD key="st"><Badge text={r.payment} color={r.payment==="Paid"?"green":r.payment==="Partial"?"blue":"yellow"}/></TD>,<TD key="d">{r.date}</TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.customer)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Sale":"Record Sale"} onClose={()=>setModal(null)} accent="#c62828">
+        <Grid2>
+          <F label="Customer Name"><Inp value={form.customer} onChange={f("customer")}/></F>
+          <F label="Phone"><Inp value={form.phone} onChange={f("phone")}/></F>
+          <F label="Product" span2><Inp value={form.product} onChange={f("product")} placeholder="e.g. Maize Flour"/></F>
+          <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
+          <F label="Unit Price (UGX)"><Inp type="number" value={form.price} onChange={f("price")}/></F>
+          <F label="Payment Status"><Sel value={form.payment} onChange={f("payment")}>{["Paid","Pending","Partial"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Sale Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
+        </Grid2>
+        {form.qty&&form.price&&<div style={{background:"#e8f5e9",borderRadius:8,padding:"9px 12px",marginBottom:12,fontWeight:700,color:"#1b5e20",fontSize:13}}>Bill Total: {ugx(Number(form.price)*Number(form.qty))}</div>}
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#c62828,#e53935)",color:"#fff"}}>{isEdit?"Save Changes":"Save Sale"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Expenses({ crud, canDelete, canEdit }) {
+  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
+  const BK={date:"",type:"Seeds Purchase",amount:"",description:""};
+  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+  const isEdit=modal&&modal!=="add";
+  const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  const total=items.reduce((s,e)=>s+Number(e.amount||0),0);
+  const byT=items.reduce((a,e)=>{a[e.type]=(a[e.type]||0)+Number(e.amount||0);return a;},{});
+  return (
+    <div>
+      <PH icon="expenses" title="Expenses" sub={`Total: ${ugx(total)}`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Expense" ac="#e65100" canAdd={canEdit}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:14}}>
+        {Object.entries(byT).map(([t,v])=>(
+          <div key={t} style={{background:"#fff",borderRadius:10,padding:".9rem",boxShadow:"0 2px 8px rgba(0,0,0,.06)",borderLeft:"3px solid #e65100"}}>
+            <div style={{fontSize:10.5,color:"#888",textTransform:"uppercase",letterSpacing:".4px"}}>{t}</div>
+            <div style={{fontSize:14,fontWeight:800,color:"#bf360c",marginTop:2}}>{ugx(v)}</div>
+          </div>
+        ))}
+      </div>
+      <Tbl cols={["Date","Type","Amount (UGX)","Description","Actions"]} data={items}
+        row={r=>[<TD key="d">{r.date}</TD>,<TD key="t" bold>{r.type}</TD>,<TD key="a">{ugx(r.amount)}</TD>,<TD key="de">{r.description||"—"}</TD>,<TD key="ac">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.type)} disabled={!canDelete}/></TD>]}
+      />
+      {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
+      {modal&&<Modal title={isEdit?"Edit Expense":"Add Expense"} onClose={()=>setModal(null)} accent="#e65100">
+        <Grid2>
+          <F label="Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
+          <F label="Expense Type"><Sel value={form.type} onChange={f("type")}>{["Seeds Purchase","Fertilizer","Animal Feed","Salaries","Equipment Repair","Transport","Utilities","Veterinary","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          <F label="Amount (UGX)"><Inp type="number" value={form.amount} onChange={f("amount")}/></F>
+          <F label="Description"><Inp value={form.description} onChange={f("description")}/></F>
+        </Grid2>
+        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff"}}>{isEdit?"Save Changes":"Add Expense"}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+function Reports({ data }) {
+  const rev=data.sales.reduce((s,x)=>s+Number(x.price||0)*Number(x.qty||1),0);
+  const exp=data.expenses.reduce((s,x)=>s+Number(x.amount||0),0);
+  const profit=rev-exp;
+  const expByT=data.expenses.reduce((a,e)=>{a[e.type]=(a[e.type]||0)+Number(e.amount||0);return a;},{});
+  const salesByP=data.sales.reduce((a,s)=>{a[s.product]=(a[s.product]||0)+(Number(s.price||0)*Number(s.qty||1));return a;},{});
+  const maxE=Math.max(...Object.values(expByT),1); const maxS=Math.max(...Object.values(salesByP),1);
+  const Card=({title,children,color="#2e7d32"})=>(<div style={{background:"#fff",borderRadius:12,padding:"1.3rem",boxShadow:"0 2px 10px rgba(0,0,0,.07)",marginBottom:14,borderTop:`4px solid ${color}`}}><h3 style={{margin:"0 0 .9rem",fontFamily:"Georgia,serif",color:"#1a3a2a",fontSize:"1rem"}}>{title}</h3>{children}</div>);
+  const Bar=({label,value,max,color})=>(<div style={{marginBottom:9}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}><span style={{fontWeight:600}}>{label}</span><span style={{color:"#888"}}>{ugx(value)}</span></div><div style={{background:"#f0f0f0",borderRadius:5,height:8}}><div style={{width:`${Math.min(100,(value/max)*100)}%`,background:color,borderRadius:5,height:8}}/></div></div>);
+  return (
+    <div>
+      <PH icon="reports" title="Reports & Analytics" sub="Farm performance — Uganda Shillings (UGX)"/>
+      <Card title="📊 Profit & Loss">
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:11}}>
+          {[{l:"Revenue",v:ugx(rev),c:"#2e7d32"},{l:"Expenses",v:ugx(exp),c:"#c62828"},{l:"Net Profit",v:ugx(profit),c:profit>=0?"#1565c0":"#c62828"},{l:"Margin",v:`${rev>0?((profit/rev)*100).toFixed(1):0}%`,c:profit>=0?"#00695c":"#c62828"}].map(x=>(<div key={x.l} style={{textAlign:"center",padding:".9rem",background:"#f8fdf6",borderRadius:9}}><div style={{fontSize:16,fontWeight:800,color:x.c}}>{x.v}</div><div style={{fontSize:11.5,color:"#888"}}>{x.l}</div></div>))}
+        </div>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14}}>
+        <Card title="💰 Expenses by Category" color="#f57c00">{Object.entries(expByT).map(([k,v])=><Bar key={k} label={k} value={v} max={maxE} color="#f57c00"/>)}</Card>
+        <Card title="🛒 Revenue by Product" color="#1565c0">{Object.entries(salesByP).map(([k,v])=><Bar key={k} label={k} value={v} max={maxS} color="#1565c0"/>)}</Card>
+      </div>
+      <Card title="🌾 Production & Workforce Summary" color="#4caf50">
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:11}}>
+          {[{l:"Crop Records",v:data.crops.length},{l:"Harvest Units",v:data.harvest.reduce((s,h)=>s+Number(h.qty||0),0)},{l:"Total Animals",v:data.livestock.reduce((s,l)=>s+Number(l.count||0),0)},{l:"Active Staff",v:data.workers.filter(w=>w.status==="Active").length},{l:"Suppliers",v:data.suppliers.length},{l:"Payroll/mo",v:ugx(data.workers.reduce((s,w)=>s+Number(w.salary||0),0))}].map(x=>(<div key={x.l} style={{textAlign:"center",padding:".9rem",background:"#e8f5e9",borderRadius:9}}><div style={{fontSize:15,fontWeight:800,color:"#1b5e20"}}>{x.v}</div><div style={{fontSize:11,color:"#4a7c59"}}>{x.l}</div></div>))}
+        </div>
+      </Card>
+      <Card title="🌱 Crop Economics Summary" color="#43a047">
+        <Tbl cols={["Crop","Field","Area","Stage","Input Cost","Revenue","Profit"]} data={data.crops}
+          row={r=>[<TD key="n" bold>{r.name}</TD>,<TD key="f">{r.field||"—"}</TD>,<TD key="a">{r.area?`${r.area} ${r.areaUnit}`:"—"}</TD>,<TD key="s"><Badge text={r.status} color={r.status==="Growing"||r.status==="Vegetative"?"green":r.status==="Harvested"?"blue":"yellow"}/></TD>,<TD key="ic">{r.inputCost?ugx(r.inputCost):"—"}</TD>,<TD key="er">{r.expectedRevenue?ugx(r.expectedRevenue):"—"}</TD>,<TD key="pr">{r.inputCost&&r.expectedRevenue?<span style={{fontWeight:700,color:Number(r.expectedRevenue)>=Number(r.inputCost)?"#1b5e20":"#c62828"}}>{ugx(Number(r.expectedRevenue)-Number(r.inputCost))}</span>:"—"}</TD>]}
+        />
+      </Card>
+    </div>
+  );
+}
+
+/* ══════════ NAV CONFIG ══════════════════════════════════════ */
+const NAV = [
+  {id:"dashboard", l:"Dashboard",  ic:"dashboard"},
+  {id:"users",     l:"Users",      ic:"users",   adminOnly:true},
+  {id:"suppliers", l:"Suppliers",  ic:"suppliers"},
+  {id:"crops",     l:"Crops",      ic:"crops"},
+  {id:"livestock", l:"Livestock",  ic:"livestock"},
+  {id:"workers",   l:"Workers",    ic:"workers"},
+  {id:"inventory", l:"Inventory",  ic:"inventory"},
+  {id:"harvest",   l:"Harvest",    ic:"harvest"},
+  {id:"processing",l:"Processing", ic:"processing"},
+  {id:"sales",     l:"Sales",      ic:"sales"},
+  {id:"expenses",  l:"Expenses",   ic:"expenses"},
+  {id:"reports",   l:"Reports",    ic:"reports"},
+];
+
+/* ══════════ MAIN APP ════════════════════════════════════════ */
+export default function App() {
+  const [users, setUsers] = useState(INIT_USERS);
+  const [user,  setUser]  = useState(null);
+  const [page,  setPage]  = useState("dashboard");
+  const [menu,  setMenu]  = useState(false);
+
+  const supCRUD = useCRUD(SEED.suppliers);
+  const cCRUD   = useCRUD(SEED.crops);
+  const lCRUD   = useCRUD(SEED.livestock);
+  const wCRUD   = useCRUD(SEED.workers);
+  const invCRUD = useCRUD(SEED.inventory);
+  const hvCRUD  = useCRUD(SEED.harvest);
+  const prCRUD  = useCRUD(SEED.processing);
+  const slCRUD  = useCRUD(SEED.sales);
+  const exCRUD  = useCRUD(SEED.expenses);
+
+  const isAdmin  = user?.role === "admin";
+  const isViewer = user?.role === "viewer";
+  const canEdit  = !isViewer;
+  const canDel   = isAdmin;
+
+  const data = { suppliers:supCRUD.items, crops:cCRUD.items, livestock:lCRUD.items, workers:wCRUD.items, inventory:invCRUD.items, harvest:hvCRUD.items, processing:prCRUD.items, sales:slCRUD.items, expenses:exCRUD.items };
+
+  if (!user) return <Login users={users} onLogin={u => { setUser(u); setPage("dashboard"); }} />;
+
+  const navItems = NAV.filter(n => !n.adminOnly || isAdmin);
+  const go = id => { setPage(id); setMenu(false); };
+
+  const pageMap = {
+    dashboard: <Dashboard data={data} />,
+    users:     <Users users={users} setUsers={setUsers} canDelete={canDel} />,
+    suppliers: <Suppliers crud={supCRUD} canDelete={canDel} canEdit={canEdit} />,
+    crops:     <Crops crud={cCRUD} canDelete={canDel} canEdit={canEdit} />,
+    livestock: <Livestock crud={lCRUD} canDelete={canDel} canEdit={canEdit} />,
+    workers:   <Workers crud={wCRUD} canDelete={canDel} canEdit={canEdit} />,
+    inventory: <Inventory crud={invCRUD} canDelete={canDel} canEdit={canEdit} suppliers={supCRUD.items} />,
+    harvest:   <Harvest crud={hvCRUD} canDelete={canDel} canEdit={canEdit} />,
+    processing:<Processing crud={prCRUD} canDelete={canDel} canEdit={canEdit} />,
+    sales:     <Sales crud={slCRUD} canDelete={canDel} canEdit={canEdit} />,
+    expenses:  <Expenses crud={exCRUD} canDelete={canDel} canEdit={canEdit} />,
+    reports:   <Reports data={data} />,
+  };
+
+  const rc = ROLE_INFO[user.role];
+  const SB_W = 220;
+
+  const Sidebar = () => (
+    <div style={{ width:SB_W, background:"linear-gradient(180deg,#0d2818,#1a3a2a 55%,#1b4332)", display:"flex", flexDirection:"column", height:"100%", overflowY:"auto" }}>
+      <div style={{ padding:"1.4rem 1.2rem .8rem", borderBottom:"1px solid rgba(255,255,255,.08)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:40, height:40, borderRadius:11, background:"linear-gradient(135deg,#d4a017,#f5c842)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 4px 10px rgba(212,160,23,.4)" }}><Ico n="leaf" s={20} /></div>
+          <div><div style={{ color:"#fff", fontWeight:800, fontSize:13 }}>Tali Agro</div><div style={{ color:"rgba(255,255,255,.4)", fontSize:10.5 }}>Farm & Processing</div></div>
+        </div>
+        <div style={{ marginTop:10, padding:"7px 9px", borderRadius:8, background:"rgba(255,255,255,.06)" }}>
+          <div style={{ fontSize:10, color:"rgba(255,255,255,.4)" }}>Logged in as</div>
+          <div style={{ fontSize:13, fontWeight:700, color:rc.color, marginTop:1 }}>{user.name || user.username}</div>
+          <div style={{ fontSize:10.5, color:"rgba(255,255,255,.3)" }}>{rc.label}</div>
+          {isViewer && <div style={{ fontSize:10, color:"rgba(255,200,100,.5)", marginTop:2 }}>Read-only access</div>}
+          {!isAdmin && !isViewer && <div style={{ fontSize:10, color:"rgba(255,255,255,.3)", marginTop:2 }}>Cannot delete records</div>}
+        </div>
+      </div>
+      <nav style={{ flex:1, padding:".6rem .5rem" }}>
+        {navItems.map(n => {
+          const a = page === n.id;
+          return <button key={n.id} onClick={() => go(n.id)} style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"8px 11px", marginBottom:1, border:"none", cursor:"pointer", borderRadius:8, fontSize:13, fontWeight:a?700:500, background:a?"rgba(212,160,23,.18)":"transparent", color:a?"#f5c842":"rgba(255,255,255,.62)", borderLeft:a?"3px solid #f5c842":"3px solid transparent", textAlign:"left" }}>
+            <span style={{ opacity:a?1:.7, flexShrink:0 }}><Ico n={n.ic} s={15} /></span>{n.l}
+          </button>;
+        })}
+      </nav>
+      <div style={{ padding:".6rem .5rem", borderTop:"1px solid rgba(255,255,255,.08)" }}>
+        <button onClick={() => { setUser(null); setPage("dashboard"); }} style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"8px 11px", border:"none", cursor:"pointer", borderRadius:8, background:"rgba(255,100,100,.1)", color:"#ff8a80", fontSize:13, fontWeight:600 }}>
+          <Ico n="logout" s={14} /> Sign Out
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        body,#root{font-family:'DM Sans',sans-serif;height:100%}
+        input,select,textarea,button{font-family:'DM Sans',sans-serif}
+        input:focus,select:focus,textarea:focus{outline:none;border-color:#2e7d32!important;box-shadow:0 0 0 3px rgba(46,125,50,.12)!important}
+        ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar-thumb{background:#b0cba8;border-radius:2px}
+        button:not(:disabled):active{transform:scale(.97)}
+      `}</style>
+      <div style={{ display:"flex", height:"100vh", overflow:"hidden", background:"#f0f5ee" }}>
+
+        {/* Desktop sidebar */}
+        <div style={{ width:SB_W, flexShrink:0, display:"flex", flexDirection:"column" }}>
+          <Sidebar />
+        </div>
+
+        {/* Mobile menu overlay */}
+        {menu && (
+          <>
+            <div onClick={() => setMenu(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.5)", zIndex:200 }} />
+            <div style={{ position:"fixed", left:0, top:0, bottom:0, width:SB_W, zIndex:201 }}><Sidebar /></div>
+          </>
+        )}
+
+        {/* Main */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+          {/* Top bar */}
+          <div style={{ background:"#fff", borderBottom:"1px solid #e4ede0", padding:".75rem 1.2rem", display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <button onClick={() => setMenu(v=>!v)} style={{ background:"none", border:"none", cursor:"pointer", color:"#1a3a2a", display:"flex", padding:4 }}><Ico n="menu" s={22} /></button>
+              <div>
+                <div style={{ fontWeight:800, fontSize:14, color:"#1a3a2a" }}>{navItems.find(n=>n.id===page)?.l}</div>
+                <div style={{ fontSize:11, color:"#aaa" }}>Tali Agro Farm & Processing · UGX</div>
+              </div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontSize:12.5, fontWeight:700, color:"#1a3a2a" }}>{user.name||user.username}</div>
+                <div style={{ fontSize:11, color:rc.color, fontWeight:600 }}>{rc.label}</div>
+              </div>
+              <div style={{ width:34, height:34, borderRadius:"50%", background:`linear-gradient(135deg,${rc.color},${rc.color}99)`, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:800, fontSize:13, flexShrink:0 }}>
+                {(user.name||user.username)[0].toUpperCase()}
+              </div>
+            </div>
+          </div>
+
+          {/* Access level banner */}
+          {isViewer && <div style={{ background:"#e3f2fd", borderBottom:"1px solid #90caf9", padding:"6px 1.2rem", fontSize:12.5, color:"#1565c0", display:"flex", alignItems:"center", gap:6, flexShrink:0 }}><Ico n="eye" s={13}/> <strong>Viewer mode</strong> — Read-only access. Contact Admin to make changes.</div>}
+          {!isAdmin && !isViewer && <div style={{ background:"#fff8e1", borderBottom:"1px solid #ffe082", padding:"6px 1.2rem", fontSize:12.5, color:"#6d4c00", display:"flex", alignItems:"center", gap:6, flexShrink:0 }}><Ico n="shield" s={13}/> <strong>Manager mode</strong> — Add & edit enabled. Only <strong>Admin</strong> can delete.</div>}
+
+          {/* Page */}
+          <div style={{ flex:1, overflowY:"auto", padding:"1.2rem 1.4rem" }}>
+            {pageMap[page] || <Dashboard data={data} />}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
