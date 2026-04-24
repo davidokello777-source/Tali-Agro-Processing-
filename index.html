@@ -1,4 +1,33 @@
-import { useState, useMemo } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="theme-color" content="#1a3a2a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Tali Agro"/>
+<title>Tali Agro Farm & Processing System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;font-family:'DM Sans',sans-serif}
+body{background:#f0f5ee;overflow:hidden}
+input,select,textarea,button{font-family:'DM Sans',sans-serif}
+input:focus,select:focus,textarea:focus{outline:none!important;border-color:#2e7d32!important;box-shadow:0 0 0 3px rgba(46,125,50,.13)!important}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#b0cba8;border-radius:2px}
+button:not(:disabled):active{transform:scale(.97)}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pg{animation:fi .18s ease}
+</style>
+</head>
+<body>
+<div id="root"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0d2818,#1b4332);color:#fff"><div style="font-size:50px;margin-bottom:14px">&#x1F33F;</div><p style="opacity:.5;font-size:14px">Loading Tali Agro Farm System…</p></div></div>
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect} = React;
 
 /* ══════════ CURRENCY ══════════════════════════════════════════ */
 const ugx = v => `UGX ${Number(v || 0).toLocaleString()}`;
@@ -36,12 +65,12 @@ const SEED = {
     {id:3,name:"Peter Ssebunya", role:"Farm Hand",         phone:"+256 785 456 789",salary:"550000",status:"Active"},
   ],
   inventory:[
-    {id:1,item:"Maize Seed (SC403)",qty:"50", unit:"Bags", supplier:"Seedco Uganda",      date:"2025-10-15",category:"Seeds"},
-    {id:2,item:"NPK Fertilizer",    qty:"120",unit:"Bags", supplier:"Agri-Input Ltd",     date:"2025-10-20",category:"Fertilizer"},
-    {id:3,item:"Broiler Feed",      qty:"40", unit:"Bags", supplier:"Livestock Feeds UG", date:"2025-11-01",category:"Animal Feed"},
-    {id:4,item:"Sprayer Pump",      qty:"3",  unit:"Units",supplier:"Farm Tools Ltd",     date:"2025-09-10",category:"Tools"},
-  ],
-  harvest:[
+  {id:1,item:"Maize Seed SC403",qty:"50",unit:"Bags",unitPrice:"28000",supplier:"Seedco Uganda",dateReceived:"2025-10-15",expiryDate:"2026-09-30",batchNo:"SL-2025-001",category:"Seeds",storageLocation:"Store A — Shelf 1",condition:"Good",reorderLevel:"10",notes:"Certified seed. Keep dry."},
+  {id:2,item:"NPK Fertilizer 17:17:17",qty:"120",unit:"Bags",unitPrice:"18500",supplier:"Agri-Input Ltd",dateReceived:"2025-10-20",expiryDate:"2027-10-20",batchNo:"NPK-2025-B2",category:"Fertilizer",storageLocation:"Store B — Fertilizer Bay",condition:"Good",reorderLevel:"20",notes:"Keep away from moisture."},
+  {id:3,item:"Broiler Starter Feed",qty:"40",unit:"Bags",unitPrice:"14500",supplier:"Livestock Feeds UG",dateReceived:"2025-11-01",expiryDate:"2026-03-01",batchNo:"BSF-2025-11",category:"Animal Feed",storageLocation:"Feed Store",condition:"Good",reorderLevel:"15",notes:"Use within 3 months."},
+  {id:4,item:"Knapsack Sprayer 16L",qty:"3",unit:"Units",unitPrice:"85000",supplier:"Farm Tools Ltd",dateReceived:"2025-09-10",expiryDate:"",batchNo:"KS-2025-003",category:"Tools",storageLocation:"Equipment Shed",condition:"Good",reorderLevel:"1",notes:"Inspect seals monthly."},
+],
+    harvest:[
     {id:1,crop:"Maize",      harvestDate:"2026-02-15",qty:"450",unit:"Bags",location:"Store A",quality:"Grade A"},
     {id:2,crop:"Groundnuts", harvestDate:"2026-02-20",qty:"80", unit:"Bags",location:"Store B",quality:"Grade B"},
   ],
@@ -50,17 +79,18 @@ const SEED = {
     {id:2,rawMaterial:"Groundnuts",product:"Groundnut Paste",date:"2026-02-22",batch:"GP-2026-01",inputQty:"20", outputQty:"180",unit:"Jars"},
   ],
   sales:[
-    {id:1,customer:"City Market Traders",phone:"0772 111 222",product:"Maize Flour",    qty:"50", price:"120000",payment:"Paid",   date:"2026-02-25"},
-    {id:2,customer:"Green Valley Stores", phone:"0703 333 444",product:"Broiler Chicken",qty:"30", price:"85000", payment:"Pending",date:"2026-02-28"},
-    {id:3,customer:"Tali Retail Outlet",  phone:"0785 555 666",product:"Groundnut Paste",qty:"100",price:"32000", payment:"Paid",   date:"2026-03-01"},
-  ],
-  expenses:[
-    {id:1,date:"2026-01-05",type:"Seeds Purchase",  amount:"1250000",description:"SC403 Maize seed procurement"},
-    {id:2,date:"2026-01-12",type:"Fertilizer",       amount:"2400000",description:"NPK & CAN fertilizer"},
-    {id:3,date:"2026-02-01",type:"Salaries",         amount:"3200000",description:"January worker salaries"},
-    {id:4,date:"2026-02-10",type:"Equipment Repair", amount:"450000", description:"Tractor service"},
-    {id:5,date:"2026-03-01",type:"Animal Feed",      amount:"880000", description:"Broiler feed stock"},
-  ],
+  {id:1,invoiceNo:"INV-2026-001",customer:"City Market Traders",phone:"0772 111 222",address:"Kampala Road, Kampala",product:"Maize Flour 1kg",qty:"50",unitPrice:"120000",discount:"0",payment:"Paid",paymentMethod:"Mobile Money (MTN)",paymentDate:"2026-02-25",saleDate:"2026-02-25",deliveredBy:"James Otieno",notes:"Regular bulk client"},
+  {id:2,invoiceNo:"INV-2026-002",customer:"Green Valley Stores",phone:"0703 333 444",address:"Entebbe Road, Entebbe",product:"Broiler Chicken (Live)",qty:"30",unitPrice:"85000",discount:"5",payment:"Pending",paymentMethod:"Bank Transfer",paymentDate:"",saleDate:"2026-02-28",deliveredBy:"Peter Ssebunya",notes:"Pending collection"},
+  {id:3,invoiceNo:"INV-2026-003",customer:"Tali Retail Outlet",phone:"0785 555 666",address:"Main Street, Mukono",product:"Groundnut Paste 500g",qty:"100",unitPrice:"32000",discount:"0",payment:"Paid",paymentMethod:"Cash",paymentDate:"2026-03-01",saleDate:"2026-03-01",deliveredBy:"Grace Nakato",notes:"Own retail outlet"},
+],
+    expenses:[
+  {id:1,date:"2026-01-05",type:"Seeds Purchase",subType:"Crop Input",amount:"1250000",vendor:"Seedco Uganda",receiptNo:"RCP-001-2026",paymentMethod:"Bank Transfer",paidBy:"James Otieno",approvedBy:"Admin",description:"SC403 Maize seed for Season A",notes:""},
+  {id:2,date:"2026-01-12",type:"Fertilizer",subType:"Crop Input",amount:"2400000",vendor:"Agri-Input Ltd",receiptNo:"RCP-002-2026",paymentMethod:"Bank Transfer",paidBy:"James Otieno",approvedBy:"Admin",description:"NPK & CAN fertilizer — Block A, B, C",notes:""},
+  {id:3,date:"2026-02-01",type:"Salaries",subType:"Labour",amount:"3200000",vendor:"Farm Payroll",receiptNo:"PAY-JAN-2026",paymentMethod:"Mobile Money (MTN)",paidBy:"Farm Manager",approvedBy:"Admin",description:"January 2026 worker salaries — 3 staff",notes:""},
+  {id:4,date:"2026-02-10",type:"Equipment Repair",subType:"Maintenance",amount:"450000",vendor:"Kira Auto Garage",receiptNo:"RCP-004-2026",paymentMethod:"Cash",paidBy:"Grace Nakato",approvedBy:"Admin",description:"Tractor full service + oil change",notes:"Next service due: Aug 2026"},
+  {id:5,date:"2026-03-01",type:"Animal Feed",subType:"Livestock",amount:"880000",vendor:"Livestock Feeds UG",receiptNo:"RCP-005-2026",paymentMethod:"Bank Transfer",paidBy:"James Otieno",approvedBy:"Admin",description:"Broiler starter & finisher feed — Batch 01",notes:""},
+],
+
 };
 
 /* ══════════ ICONS ════════════════════════════════════════════ */
@@ -695,31 +725,83 @@ function Workers({ crud, canDelete, canEdit }) {
   );
 }
 
-function Inventory({ crud, canDelete, canEdit, suppliers }) {
-  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
-  const BK={item:"",qty:"",unit:"Bags",supplier:"",date:"",category:"Seeds"};
-  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+
+const ITABS=[{id:"main",label:"📦 Item Details"},{id:"stock",label:"📊 Stock & Valuation"},{id:"extra",label:"📋 Storage & Notes"}];
+const BKINV={item:"",category:"Seeds",supplier:"",unit:"Bags",qty:"",unitPrice:"",reorderLevel:"",dateReceived:"",expiryDate:"",batchNo:"",storageLocation:"",condition:"Good",notes:""};
+function Inventory({crud,canDelete,canEdit,suppliers}){
+  const{items,add,upd,askDel,confirmDel,cancelDel,delTarget}=crud;
+  const[modal,setModal]=useState(null);
+  const[form,setForm]=useState(BKINV);
+  const[tab,setTab]=useState("main");
   const isEdit=modal&&modal!=="add";
   const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const open=r=>{setForm(r?{...r}:BKINV);setTab("main");setModal(r||"add");};
   const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
-  return (
-    <div>
-      <PH icon="inventory" title="Inventory" sub="Seeds · Fertilizers · Feeds · Tools" onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Item" ac="#e65100" canAdd={canEdit}/>
-      <Tbl cols={["Item","Category","Qty","Supplier","Date","Actions"]} data={items}
-        row={r=>[<TD key="i" bold>{r.item}</TD>,<TD key="c"><Badge text={r.category} color="blue"/></TD>,<TD key="q">{r.qty} {r.unit}</TD>,<TD key="s">{r.supplier||"—"}</TD>,<TD key="d">{r.date}</TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.item)} disabled={!canDelete}/></TD>]}
+  const ti=ITABS.findIndex(t=>t.id===tab);
+  const stockVal=items.reduce((s,x)=>s+Number(x.unitPrice||0)*Number(x.qty||0),0);
+  const lowStock=items.filter(x=>x.reorderLevel&&Number(x.qty)<=Number(x.reorderLevel));
+  return(
+    <div className="pg">
+      <PH icon="inventory" title="Inventory" sub={`${items.length} items \u00b7 Stock value: ${ugx(stockVal)}${lowStock.length>0?" \u00b7 "+lowStock.length+" low stock!":""}`} onAdd={()=>open(null)} addLabel="Add Item" ac="#e65100" canAdd={canEdit}/>
+      {lowStock.length>0&&<div style={{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"9px 13px",marginBottom:13,fontSize:12.5,color:"#6d4c00",display:"flex",gap:8}}>
+        <Ico n="warn" s={14}/> <span><strong>Low Stock:</strong> {lowStock.map(x=>`${x.item} (${x.qty} ${x.unit})`).join(", ")}</span>
+      </div>}
+      <Tbl cols={["Item","Category","Qty","Unit Price","Stock Value","Supplier","Batch No.","Expiry","Condition","Actions"]} data={items}
+        row={r=>[
+          <TD key="i" bold>{r.item}</TD>,
+          <TD key="c"><Badge text={r.category} color="blue"/></TD>,
+          <TD key="q">{r.qty} {r.unit}</TD>,
+          <TD key="up">{r.unitPrice?ugx(r.unitPrice):"—"}</TD>,
+          <TD key="sv" bold>{r.unitPrice&&r.qty?ugx(Number(r.unitPrice)*Number(r.qty)):"—"}</TD>,
+          <TD key="s">{r.supplier||"—"}</TD>,
+          <TD key="bn">{r.batchNo||"—"}</TD>,
+          <TD key="ex">{r.expiryDate?<span style={{color:new Date(r.expiryDate)<new Date()?"#c62828":"#388e3c",fontWeight:600,fontSize:11.5}}>{r.expiryDate}</span>:"—"}</TD>,
+          <TD key="cond"><Badge text={r.condition||"Good"} color={r.condition==="Expired"||r.condition==="Damaged"?"red":r.condition==="Fair"?"yellow":"green"}/></TD>,
+          <TD key="a">{canEdit&&<EditBtn onClick={()=>open(r)}/>}<DelBtn onClick={()=>askDel(r.id,r.item)} disabled={!canDelete}/></TD>,
+        ]}
       />
       {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
-      {modal&&<Modal title={isEdit?"Edit Item":"Add Item"} onClose={()=>setModal(null)} accent="#e65100">
-        <F label="Item Name"><Inp value={form.item} onChange={f("item")}/></F>
-        <Grid2>
-          <F label="Category"><Sel value={form.category} onChange={f("category")}>{["Seeds","Fertilizer","Animal Feed","Tools","Pesticides","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
-          <F label="Supplier"><Sel value={form.supplier} onChange={f("supplier")}><option value="">— Select —</option>{suppliers.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}</Sel></F>
-          <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
-          <F label="Unit"><Inp value={form.unit} onChange={f("unit")}/></F>
-        </Grid2>
-        <F label="Date Received"><Inp type="date" value={form.date} onChange={f("date")}/></F>
-        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff"}}>{isEdit?"Save Changes":"Add Item"}</button>
-      </Modal>}
+      {modal&&(
+        <Modal title={isEdit?"Edit Item":"Add Inventory Item"} onClose={()=>setModal(null)} accent="#e65100" wide>
+          <TabBar tabs={ITABS} active={tab} set={setTab}/>
+          {tab==="main"&&<Grid2>
+            <F label="Item Name" span2><Inp value={form.item} onChange={f("item")} placeholder="Full descriptive item name"/></F>
+            <F label="Category"><Sel value={form.category} onChange={f("category")}>{["Seeds","Fertilizer","Animal Feed","Tools","Pesticides","Herbicides","Veterinary","Packaging","Fuel & Lubricants","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Supplier"><Sel value={form.supplier} onChange={f("supplier")}><option value="">— Select supplier —</option>{suppliers.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}</Sel></F>
+            <F label="Quantity Received"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
+            <F label="Unit of Measure"><Sel value={form.unit} onChange={f("unit")}>{["Bags","Kg","Litres","Units","Boxes","Jerricans","Tonnes","Crates","Bundles","Rolls"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Date Received"><Inp type="date" value={form.dateReceived} onChange={f("dateReceived")}/></F>
+            <F label="Batch / Lot Number"><Inp value={form.batchNo} onChange={f("batchNo")} placeholder="e.g. SL-2025-001"/></F>
+          </Grid2>}
+          {tab==="stock"&&<Grid2>
+            <F label="Unit Price (UGX)"><Inp type="number" value={form.unitPrice} onChange={f("unitPrice")} placeholder="Price per unit/bag/litre"/></F>
+            <F label="Reorder Level"><Inp type="number" value={form.reorderLevel} onChange={f("reorderLevel")} placeholder="Min qty before reorder alert"/></F>
+            {form.unitPrice&&form.qty&&<F label="Total Stock Value" span2>
+              <div style={{padding:"9px 12px",background:"#e8f5e9",borderRadius:8,fontWeight:700,color:"#1b5e20",fontSize:13}}>
+                {ugx(Number(form.unitPrice)*Number(form.qty))} &mdash; {form.qty} {form.unit} @ {ugx(form.unitPrice)} each
+              </div>
+            </F>}
+            {form.reorderLevel&&Number(form.qty)<=Number(form.reorderLevel)&&<F label="Reorder Alert" span2>
+              <div style={{padding:"9px 12px",background:"#ffebee",borderRadius:8,fontWeight:700,color:"#c62828",fontSize:13}}>
+                Current stock ({form.qty} {form.unit}) is at or below reorder level ({form.reorderLevel} {form.unit}). Please restock.
+              </div>
+            </F>}
+            <F label="Expiry Date"><Inp type="date" value={form.expiryDate} onChange={f("expiryDate")}/></F>
+            <F label="Current Condition"><Sel value={form.condition} onChange={f("condition")}>{["Excellent","Good","Fair","Damaged","Expired"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+          </Grid2>}
+          {tab==="extra"&&<Grid2>
+            <F label="Storage Location" span2><Inp value={form.storageLocation} onChange={f("storageLocation")} placeholder="e.g. Store A — Shelf 1"/></F>
+            <F label="Notes / Handling Instructions" span2><Txt value={form.notes} onChange={f("notes")} placeholder="Storage requirements, handling notes, usage instructions..."/></F>
+          </Grid2>}
+          <div style={{display:"flex",gap:10,marginTop:12,borderTop:"1px solid #e0eed9",paddingTop:12}}>
+            {ti>0&&<button onClick={()=>setTab(ITABS[ti-1].id)} style={{padding:"10px 16px",border:"1.5px solid #c8dfc0",borderRadius:9,background:"#fff",cursor:"pointer",fontWeight:600,fontSize:13,color:"#e65100"}}>← Back</button>}
+            {ti<ITABS.length-1
+              ?<button onClick={()=>setTab(ITABS[ti+1].id)} style={{flex:1,padding:10,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>Next →</button>
+              :<button onClick={save} style={{flex:1,padding:10,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>{isEdit?"Save Changes":"Add Item"}</button>
+            }
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -783,77 +865,171 @@ function Processing({ crud, canDelete, canEdit }) {
   );
 }
 
-function Sales({ crud, canDelete, canEdit }) {
-  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
-  const BK={customer:"",phone:"",product:"",qty:"",price:"",payment:"Paid",date:""};
-  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+
+const STABS=[{id:"basic",label:"🧾 Sale Details"},{id:"payment",label:"💳 Payment"},{id:"delivery",label:"🚚 Delivery & Notes"}];
+const BKSL={invoiceNo:"",customer:"",phone:"",address:"",product:"",qty:"",unitPrice:"",discount:"0",payment:"Paid",paymentMethod:"Cash",paymentDate:"",saleDate:"",deliveredBy:"",notes:""};
+function Sales({crud,canDelete,canEdit}){
+  const{items,add,upd,askDel,confirmDel,cancelDel,delTarget}=crud;
+  const[modal,setModal]=useState(null);
+  const[form,setForm]=useState(BKSL);
+  const[tab,setTab]=useState("basic");
   const isEdit=modal&&modal!=="add";
   const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const open=r=>{setForm(r?{...r}:BKSL);setTab("basic");setModal(r||"add");};
   const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
-  const totalRev=items.reduce((s,x)=>s+Number(x.price||0)*Number(x.qty||1),0);
-  return (
-    <div>
-      <PH icon="sales" title="Sales & Customers" sub={`${items.length} transactions · ${ugx(totalRev)}`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="New Sale" ac="#c62828" canAdd={canEdit}/>
-      <Tbl cols={["Customer","Product","Qty","Unit Price","Total","Status","Date","Actions"]} data={items}
-        row={r=>[<TD key="c" bold>{r.customer}</TD>,<TD key="p">{r.product}</TD>,<TD key="q">{r.qty}</TD>,<TD key="up">{ugx(r.price)}</TD>,<TD key="t" bold>{ugx(Number(r.price||0)*Number(r.qty||1))}</TD>,<TD key="st"><Badge text={r.payment} color={r.payment==="Paid"?"green":r.payment==="Partial"?"blue":"yellow"}/></TD>,<TD key="d">{r.date}</TD>,<TD key="a">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.customer)} disabled={!canDelete}/></TD>]}
+  const ti=STABS.findIndex(t=>t.id===tab);
+  const totalRev=items.reduce((s,x)=>s+Number(x.unitPrice||0)*Number(x.qty||1)*(1-Number(x.discount||0)/100),0);
+  const pending=items.filter(x=>x.payment==="Pending");
+  const lineTotal=form.unitPrice&&form.qty?Number(form.unitPrice)*Number(form.qty)*(1-Number(form.discount||0)/100):0;
+  return(
+    <div className="pg">
+      <PH icon="sales" title="Sales & Customers" sub={`${items.length} transactions \u00b7 ${ugx(totalRev)} revenue \u00b7 ${pending.length} pending`} onAdd={()=>open(null)} addLabel="New Sale" ac="#c62828" canAdd={canEdit}/>
+      {pending.length>0&&<div style={{background:"#ffebee",border:"1px solid #ef9a9a",borderRadius:10,padding:"9px 13px",marginBottom:13,fontSize:12.5,color:"#b71c1c",display:"flex",gap:8}}>
+        <Ico n="warn" s={14}/> <span><strong>Pending Payments:</strong> {pending.length} sale(s) — {ugx(pending.reduce((s,x)=>s+Number(x.unitPrice||0)*Number(x.qty||1),0))} outstanding</span>
+      </div>}
+      <Tbl cols={["Invoice","Customer","Product","Qty","Unit Price","Disc.","Total","Status","Method","Date","Actions"]} data={items}
+        row={r=>[
+          <TD key="inv"><code style={{fontSize:11,background:"#f5f5f5",padding:"2px 5px",borderRadius:4}}>{r.invoiceNo||"—"}</code></TD>,
+          <TD key="c" bold>{r.customer}</TD>,
+          <TD key="p">{r.product}</TD>,
+          <TD key="q">{r.qty}</TD>,
+          <TD key="up">{ugx(r.unitPrice)}</TD>,
+          <TD key="d">{r.discount&&Number(r.discount)>0?<span style={{color:"#e65100",fontWeight:600}}>{r.discount}%</span>:"—"}</TD>,
+          <TD key="t" bold>{ugx(Number(r.unitPrice||0)*Number(r.qty||1)*(1-Number(r.discount||0)/100))}</TD>,
+          <TD key="st"><Badge text={r.payment} color={r.payment==="Paid"?"green":r.payment==="Partial"?"blue":"yellow"}/></TD>,
+          <TD key="pm">{r.paymentMethod||"—"}</TD>,
+          <TD key="sd">{r.saleDate||"—"}</TD>,
+          <TD key="a">{canEdit&&<EditBtn onClick={()=>open(r)}/>}<DelBtn onClick={()=>askDel(r.id,r.customer)} disabled={!canDelete}/></TD>,
+        ]}
       />
       {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
-      {modal&&<Modal title={isEdit?"Edit Sale":"Record Sale"} onClose={()=>setModal(null)} accent="#c62828">
-        <Grid2>
-          <F label="Customer Name"><Inp value={form.customer} onChange={f("customer")}/></F>
-          <F label="Phone"><Inp value={form.phone} onChange={f("phone")}/></F>
-          <F label="Product" span2><Inp value={form.product} onChange={f("product")} placeholder="e.g. Maize Flour"/></F>
-          <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
-          <F label="Unit Price (UGX)"><Inp type="number" value={form.price} onChange={f("price")}/></F>
-          <F label="Payment Status"><Sel value={form.payment} onChange={f("payment")}>{["Paid","Pending","Partial"].map(x=><option key={x}>{x}</option>)}</Sel></F>
-          <F label="Sale Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
-        </Grid2>
-        {form.qty&&form.price&&<div style={{background:"#e8f5e9",borderRadius:8,padding:"9px 12px",marginBottom:12,fontWeight:700,color:"#1b5e20",fontSize:13}}>Bill Total: {ugx(Number(form.price)*Number(form.qty))}</div>}
-        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#c62828,#e53935)",color:"#fff"}}>{isEdit?"Save Changes":"Save Sale"}</button>
-      </Modal>}
+      {modal&&(
+        <Modal title={isEdit?`Edit Sale — ${form.invoiceNo}`:"Record New Sale"} onClose={()=>setModal(null)} accent="#c62828" wide>
+          <TabBar tabs={STABS} active={tab} set={setTab}/>
+          {tab==="basic"&&<Grid2>
+            <F label="Invoice Number"><Inp value={form.invoiceNo} onChange={f("invoiceNo")} placeholder="e.g. INV-2026-010"/></F>
+            <F label="Sale Date"><Inp type="date" value={form.saleDate} onChange={f("saleDate")}/></F>
+            <F label="Customer Name"><Inp value={form.customer} onChange={f("customer")}/></F>
+            <F label="Customer Phone"><Inp value={form.phone} onChange={f("phone")}/></F>
+            <F label="Product / Service" span2><Inp value={form.product} onChange={f("product")} placeholder="e.g. Maize Flour 1kg bags"/></F>
+            <F label="Quantity"><Inp type="number" value={form.qty} onChange={f("qty")}/></F>
+            <F label="Unit Price (UGX)"><Inp type="number" value={form.unitPrice} onChange={f("unitPrice")}/></F>
+            <F label="Discount (%)"><Inp type="number" value={form.discount} onChange={f("discount")} placeholder="0"/></F>
+            {lineTotal>0&&<F label="Line Total" span2>
+              <div style={{padding:"9px 12px",background:"#e8f5e9",borderRadius:8,fontWeight:700,color:"#1b5e20",fontSize:13}}>
+                {ugx(lineTotal)}
+                {Number(form.discount)>0&&<span style={{fontSize:11.5,color:"#666",marginLeft:8}}>(after {form.discount}% discount on {ugx(Number(form.unitPrice)*Number(form.qty))})</span>}
+              </div>
+            </F>}
+          </Grid2>}
+          {tab==="payment"&&<Grid2>
+            <F label="Payment Status"><Sel value={form.payment} onChange={f("payment")}>{["Paid","Pending","Partial"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Payment Method"><Sel value={form.paymentMethod} onChange={f("paymentMethod")}>{["Cash","Mobile Money (MTN)","Mobile Money (Airtel)","Bank Transfer","Cheque","Credit (30 days)","Credit (60 days)"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Payment Date"><Inp type="date" value={form.paymentDate} onChange={f("paymentDate")}/></F>
+            {form.payment!=="Paid"&&lineTotal>0&&<F label="Balance Due" span2>
+              <div style={{padding:"9px 12px",background:"#ffebee",borderRadius:8,fontWeight:700,color:"#c62828",fontSize:13}}>
+                Outstanding: {ugx(lineTotal)} — {form.payment==="Pending"?"Full amount not yet received":"Partial payment made"}
+              </div>
+            </F>}
+          </Grid2>}
+          {tab==="delivery"&&<Grid2>
+            <F label="Delivery Address" span2><Inp value={form.address} onChange={f("address")} placeholder="Customer delivery address"/></F>
+            <F label="Delivered / Sold By"><Inp value={form.deliveredBy} onChange={f("deliveredBy")} placeholder="Staff member name"/></F>
+            <F label="Notes / Terms" span2><Txt value={form.notes} onChange={f("notes")} placeholder="Any notes, special terms, customer preferences..."/></F>
+          </Grid2>}
+          <div style={{display:"flex",gap:10,marginTop:12,borderTop:"1px solid #e0eed9",paddingTop:12}}>
+            {ti>0&&<button onClick={()=>setTab(STABS[ti-1].id)} style={{padding:"10px 16px",border:"1.5px solid #c8dfc0",borderRadius:9,background:"#fff",cursor:"pointer",fontWeight:600,fontSize:13,color:"#c62828"}}>← Back</button>}
+            {ti<STABS.length-1
+              ?<button onClick={()=>setTab(STABS[ti+1].id)} style={{flex:1,padding:10,background:"linear-gradient(135deg,#c62828,#e53935)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>Next →</button>
+              :<button onClick={save} style={{flex:1,padding:10,background:"linear-gradient(135deg,#c62828,#e53935)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>{isEdit?"Save Changes":"Save Sale"}</button>
+            }
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 
-function Expenses({ crud, canDelete, canEdit }) {
-  const { items, add, upd, askDel, confirmDel, cancelDel, delTarget } = crud;
-  const BK={date:"",type:"Seeds Purchase",amount:"",description:""};
-  const [modal,setModal]=useState(null); const [form,setForm]=useState(BK);
+
+const ETABS=[{id:"basic",label:"💸 Expense Details"},{id:"payment",label:"💳 Payment Info"},{id:"extra",label:"📋 Approval & Notes"}];
+const BKEX={date:"",type:"Seeds Purchase",subType:"Crop Input",amount:"",vendor:"",receiptNo:"",paymentMethod:"Cash",paidBy:"",approvedBy:"",description:"",notes:""};
+const ETYPES=["Seeds Purchase","Fertilizer","Animal Feed","Salaries","Equipment Repair","Veterinary","Transport","Utilities","Insurance","Land Rent","Marketing","Packaging","Processing","Other"];
+const ECAT={"Seeds Purchase":"Crop Input","Fertilizer":"Crop Input","Animal Feed":"Livestock","Salaries":"Labour","Equipment Repair":"Maintenance","Veterinary":"Livestock","Transport":"Operations","Utilities":"Operations","Insurance":"Overhead","Land Rent":"Overhead","Marketing":"Operations","Packaging":"Processing","Processing":"Processing","Other":"Other"};
+function Expenses({crud,canDelete,canEdit}){
+  const{items,add,upd,askDel,confirmDel,cancelDel,delTarget}=crud;
+  const[modal,setModal]=useState(null);
+  const[form,setForm]=useState(BKEX);
+  const[tab,setTab]=useState("basic");
   const isEdit=modal&&modal!=="add";
   const f=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const open=r=>{setForm(r?{...r}:BKEX);setTab("basic");setModal(r||"add");};
   const save=()=>{isEdit?upd(form.id,form):add(form);setModal(null);};
+  const ti=ETABS.findIndex(t=>t.id===tab);
   const total=items.reduce((s,e)=>s+Number(e.amount||0),0);
   const byT=items.reduce((a,e)=>{a[e.type]=(a[e.type]||0)+Number(e.amount||0);return a;},{});
-  return (
-    <div>
-      <PH icon="expenses" title="Expenses" sub={`Total: ${ugx(total)}`} onAdd={()=>{setForm(BK);setModal("add");}} addLabel="Add Expense" ac="#e65100" canAdd={canEdit}/>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:14}}>
-        {Object.entries(byT).map(([t,v])=>(
-          <div key={t} style={{background:"#fff",borderRadius:10,padding:".9rem",boxShadow:"0 2px 8px rgba(0,0,0,.06)",borderLeft:"3px solid #e65100"}}>
+  const byCat=items.reduce((a,e)=>{const c=e.subType||"Other";a[c]=(a[c]||0)+Number(e.amount||0);return a;},{});
+  return(
+    <div className="pg">
+      <PH icon="expenses" title="Expenses" sub={`Total: ${ugx(total)} \u00b7 ${items.length} records`} onAdd={()=>open(null)} addLabel="Add Expense" ac="#e65100" canAdd={canEdit}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:10,marginBottom:13}}>
+        {Object.entries(byCat).map(([t,v])=>(
+          <div key={t} style={{background:"#fff",borderRadius:10,padding:".85rem",boxShadow:"0 2px 8px rgba(0,0,0,.06)",borderLeft:"3px solid #e65100"}}>
             <div style={{fontSize:10.5,color:"#888",textTransform:"uppercase",letterSpacing:".4px"}}>{t}</div>
             <div style={{fontSize:14,fontWeight:800,color:"#bf360c",marginTop:2}}>{ugx(v)}</div>
+            <div style={{marginTop:5,height:4,background:"#f5f5f5",borderRadius:2}}><div style={{width:`${Math.min(100,(v/total)*100)}%`,height:4,background:"#e65100",borderRadius:2}}/></div>
           </div>
         ))}
       </div>
-      <Tbl cols={["Date","Type","Amount (UGX)","Description","Actions"]} data={items}
-        row={r=>[<TD key="d">{r.date}</TD>,<TD key="t" bold>{r.type}</TD>,<TD key="a">{ugx(r.amount)}</TD>,<TD key="de">{r.description||"—"}</TD>,<TD key="ac">{canEdit&&<EditBtn onClick={()=>{setForm({...r});setModal(r);}}/>}<DelBtn onClick={()=>askDel(r.id,r.type)} disabled={!canDelete}/></TD>]}
+      <Tbl cols={["Date","Type","Category","Amount","Vendor","Receipt No.","Method","Paid By","Approved By","Actions"]} data={items}
+        row={r=>[
+          <TD key="d">{r.date}</TD>,
+          <TD key="t" bold>{r.type}</TD>,
+          <TD key="st"><Badge text={r.subType||"—"} color="gray"/></TD>,
+          <TD key="a" bold>{ugx(r.amount)}</TD>,
+          <TD key="v">{r.vendor||"—"}</TD>,
+          <TD key="rc">{r.receiptNo?<code style={{fontSize:11,background:"#f5f5f5",padding:"2px 5px",borderRadius:4}}>{r.receiptNo}</code>:"—"}</TD>,
+          <TD key="pm">{r.paymentMethod||"—"}</TD>,
+          <TD key="pb">{r.paidBy||"—"}</TD>,
+          <TD key="ab">{r.approvedBy||"—"}</TD>,
+          <TD key="ac">{canEdit&&<EditBtn onClick={()=>open(r)}/>}<DelBtn onClick={()=>askDel(r.id,r.type)} disabled={!canDelete}/></TD>,
+        ]}
       />
       {delTarget&&<ConfirmDel name={delTarget.label} onOk={confirmDel} onNo={cancelDel}/>}
-      {modal&&<Modal title={isEdit?"Edit Expense":"Add Expense"} onClose={()=>setModal(null)} accent="#e65100">
-        <Grid2>
-          <F label="Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
-          <F label="Expense Type"><Sel value={form.type} onChange={f("type")}>{["Seeds Purchase","Fertilizer","Animal Feed","Salaries","Equipment Repair","Transport","Utilities","Veterinary","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
-          <F label="Amount (UGX)"><Inp type="number" value={form.amount} onChange={f("amount")}/></F>
-          <F label="Description"><Inp value={form.description} onChange={f("description")}/></F>
-        </Grid2>
-        <button onClick={save} style={{...cs.btn,width:"100%",background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff"}}>{isEdit?"Save Changes":"Add Expense"}</button>
-      </Modal>}
+      {modal&&(
+        <Modal title={isEdit?"Edit Expense":"Add Expense Record"} onClose={()=>setModal(null)} accent="#e65100" wide>
+          <TabBar tabs={ETABS} active={tab} set={setTab}/>
+          {tab==="basic"&&<Grid2>
+            <F label="Date"><Inp type="date" value={form.date} onChange={f("date")}/></F>
+            <F label="Amount (UGX)"><Inp type="number" value={form.amount} onChange={f("amount")}/></F>
+            <F label="Expense Type"><Sel value={form.type} onChange={e=>{const v=e.target.value;setForm(p=>({...p,type:v,subType:ECAT[v]||"Other"}));}}>{ETYPES.map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Category (Auto)"><Sel value={form.subType} onChange={f("subType")}>{["Crop Input","Livestock","Labour","Maintenance","Operations","Overhead","Processing","Other"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Vendor / Payee"><Inp value={form.vendor} onChange={f("vendor")} placeholder="Who was paid"/></F>
+            <F label="Description" span2><Inp value={form.description} onChange={f("description")} placeholder="What was purchased or paid for"/></F>
+          </Grid2>}
+          {tab==="payment"&&<Grid2>
+            <F label="Receipt / Invoice Number"><Inp value={form.receiptNo} onChange={f("receiptNo")} placeholder="e.g. RCP-001-2026"/></F>
+            <F label="Payment Method"><Sel value={form.paymentMethod} onChange={f("paymentMethod")}>{["Cash","Mobile Money (MTN)","Mobile Money (Airtel)","Bank Transfer","Cheque","Petty Cash","Credit"].map(x=><option key={x}>{x}</option>)}</Sel></F>
+            <F label="Paid By (Staff Name)" span2><Inp value={form.paidBy} onChange={f("paidBy")} placeholder="Who made the payment"/></F>
+          </Grid2>}
+          {tab==="extra"&&<Grid2>
+            <F label="Approved By" span2><Inp value={form.approvedBy} onChange={f("approvedBy")} placeholder="Manager or Admin who approved this expense"/></F>
+            <F label="Notes / Remarks" span2><Txt value={form.notes} onChange={f("notes")} placeholder="Any additional notes, follow-up actions, next service date..."/></F>
+          </Grid2>}
+          <div style={{display:"flex",gap:10,marginTop:12,borderTop:"1px solid #e0eed9",paddingTop:12}}>
+            {ti>0&&<button onClick={()=>setTab(ETABS[ti-1].id)} style={{padding:"10px 16px",border:"1.5px solid #c8dfc0",borderRadius:9,background:"#fff",cursor:"pointer",fontWeight:600,fontSize:13,color:"#e65100"}}>← Back</button>}
+            {ti<ETABS.length-1
+              ?<button onClick={()=>setTab(ETABS[ti+1].id)} style={{flex:1,padding:10,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>Next →</button>
+              :<button onClick={save} style={{flex:1,padding:10,background:"linear-gradient(135deg,#e65100,#f57c00)",color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:13}}>{isEdit?"Save Changes":"Save Expense"}</button>
+            }
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 
 function Reports({ data }) {
-  const rev=data.sales.reduce((s,x)=>s+Number(x.price||0)*Number(x.qty||1),0);
+  const rev=data.sales.reduce((s,x)=>s+Number(x.unitPrice||x.price||0)*Number(x.qty||1)*(1-Number(x.discount||0)/100),0);
   const exp=data.expenses.reduce((s,x)=>s+Number(x.amount||0),0);
   const profit=rev-exp;
   const expByT=data.expenses.reduce((a,e)=>{a[e.type]=(a[e.type]||0)+Number(e.amount||0);return a;},{});
@@ -904,7 +1080,7 @@ const NAV = [
 ];
 
 /* ══════════ MAIN APP ════════════════════════════════════════ */
-export default function App() {
+function App() {
   const [users, setUsers] = useState(INIT_USERS);
   const [user,  setUser]  = useState(null);
   const [page,  setPage]  = useState("dashboard");
@@ -1043,3 +1219,18 @@ export default function App() {
     </>
   );
 }
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+<!-- HOW TO USE THIS FILE:
+  1. Double-click to open in Chrome/Firefox on your computer
+  2. To install on Android: open in Chrome > tap 3-dot menu > Add to Home Screen
+  3. To host online FREE: Upload to GitHub + enable GitHub Pages
+     - go to github.com/new, create repo "tali-agro"
+     - upload this file as index.html
+     - Settings > Pages > Branch: main > Save
+     - Your URL: https://YOUR-USERNAME.github.io/tali-agro
+  Login: admin/tali123  manager/mgr456  viewer/view789
+-->
+</body>
+</html>
